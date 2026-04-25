@@ -1,8 +1,6 @@
 # Database Schema
 
-## Users & Tiers
-
-### User
+## User
 | Column         | Key | References       |
 |----------------|-----|------------------|
 | user_id        | PK  |                  |
@@ -12,7 +10,7 @@
 | creation_date  |     |                  |
 | language       |     |                  |
 
-### Tier
+## Tier
 | Column         | Key | References |
 |----------------|-----|------------|
 | tier_id        | PK  |            |
@@ -21,9 +19,8 @@
 | message_limit  |     |            |
 | pro_access     |     |            |
 
-## Workspaces & Membership
 
-### Workspace
+## Workspace
 | Column         | Key | References       |
 |----------------|-----|------------------|
 | workspace_id   | PK  |                  |
@@ -31,23 +28,22 @@
 | name           |     |                  |
 | visibility     |     |                  |
 
-### WorkspaceMember
+## WorkspaceMember
 | Column         | Key     | References                 |
 |----------------|---------|----------------------------|
 | workspace_id   | PK, FK  | Workspace.workspace_id     |
 | user_id        | PK, FK  | User.user_id               |
 | role           |         |                            |
 
-## Personas & Conversations
 
-### Persona
+## Persona
 | Column         | Key | References |
 |----------------|-----|------------|
 | persona_id     | PK  |            |
 | name           |     |            |
 | instructions   |     |            |
 
-### Conversation
+## Conversation
 | Column           | Key | References                   |
 |------------------|-----|------------------------------|
 | conversation_id  | PK  |                              |
@@ -58,9 +54,8 @@
 | start_time       |     |                              |
 | status           |     |                              |
 
-## Messages & Interaction
 
-### Message
+## Message
 | Column           | Key | References                      |
 |------------------|-----|---------------------------------|
 | message_id       | PK  |                                 |
@@ -69,7 +64,7 @@
 | time_sent        |     |                                 |
 | content          |     |                                 |
 
-### MessageFeedback
+## MessageFeedback
 | Column         | Key | References             |
 |----------------|-----|------------------------|
 | feedback_id    | PK  |                        |
@@ -77,16 +72,15 @@
 | rating         |     |                        |
 | comment_text   |     |                        |
 
-### MessageBookmark
+## MessageBookmark
 | Column           | Key     | References             |
 |------------------|---------|------------------------|
 | user_id          | PK, FK  | User.user_id           |
 | message_id       | PK, FK  | Message.message_id     |
 | bookmarked_time  |         |                        |
 
-## Prompt Templates
 
-### PromptTemplate
+## PromptTemplate
 | Column           | Key | References         |
 |------------------|-----|--------------------|
 | template_id      | PK  |                    |
@@ -95,15 +89,14 @@
 | text             |     |                    |
 | visibility       |     |                    |
 
-### WorkspacePromptTemplate
+## WorkspacePromptTemplate
 | Column         | Key     | References                       |
 |----------------|---------|----------------------------------|
 | workspace_id   | PK, FK  | Workspace.workspace_id           |
 | template_id    | PK, FK  | PromptTemplate.template_id       |
 
-## Billing & Payments
 
-### BillingRecord
+## BillingRecord
 | Column           | Key | References       |
 |------------------|-----|------------------|
 | billing_id       | PK  |                  |
@@ -111,7 +104,7 @@
 | payment_method   |     |                  |
 | billing_address  |     |                  |
 
-### Invoice
+## Invoice
 | Column           | Key | References       |
 |------------------|-----|------------------|
 | invoice_id       | PK  |                  |
@@ -121,15 +114,14 @@
 | amount           |     |                  |
 | payment_status   |     |                  |
 
-## Support System
 
-### SupportAgent
+## SupportAgent
 | Column     | Key | References |
 |------------|-----|------------|
 | agent_id   | PK  |            |
 | name       |     |            |
 
-### SupportTicket
+## SupportTicket
 | Column               | Key | References                 |
 |----------------------|-----|----------------------------|
 | ticket_id            | PK  |                            |
