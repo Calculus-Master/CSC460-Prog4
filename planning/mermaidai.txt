@@ -1,7 +1,7 @@
 classDiagram
   class Tier {
     +tier_id PK
-    +tier_name
+    +tier_name UNIQUE
     +cost
     +message_limit
     +pro_access
@@ -10,7 +10,7 @@ classDiagram
     +user_id PK
     +tier_id FK
     +name
-    +email
+    +email UNIQUE
     +creation_date
     +language
   }
@@ -35,8 +35,8 @@ classDiagram
     +created_at
   }
   class WorkspaceMember {
-    +workspace_id FK
-    +user_id FK
+    +workspace_id PK FK
+    +user_id PK FK
     +role
     +joined_at
   }
@@ -67,14 +67,14 @@ classDiagram
   }
   class MessageFeedback {
     +feedback_id PK
-    +message_id FK
+    +message_id FK UNIQUE
     +rating
     +comment_text
     +submitted_at
   }
   class MessageBookmark {
-    +user_id FK
-    +message_id FK
+    +user_id PK FK
+    +message_id PK FK
     +bookmarked_time
   }
   class PromptTemplate {
@@ -87,14 +87,14 @@ classDiagram
     +created_at
   }
   class WorkspacePromptTemplate {
-    +workspace_id FK
-    +template_id FK
+    +workspace_id PK FK
+    +template_id PK FK
     +shared_at
   }
   class SupportAgent {
     +agent_id PK
     +name
-    +email
+    +email UNIQUE
     +specialty
     +hired_date
   }
@@ -108,25 +108,25 @@ classDiagram
     +status
   }
 
-  Tier "1" --> "N" User : subscribes_to
+  Tier "1" --> "N" User : has_subscriber
   Tier "1" --> "N" Invoice : billed_at_tier
-  User "1" --> "1" BillingRecord : has
+  User "1" *-- "1" BillingRecord : has
   User "1" --> "N" Invoice : receives
   User "1" --> "N" Workspace : owns
-  User "M" --> "N" WorkspaceMember : joins
+  User "1" --> "N" WorkspaceMember : joins
   Workspace "1" --> "N" WorkspaceMember : has_member
-  Workspace "1" --> "N" Conversation : groups
+  Workspace "0..1" --> "N" Conversation : groups
   User "1" --> "N" Persona : owns
   Persona "0..1" --> "N" Conversation : attached_to
   User "1" --> "N" Conversation : starts
-  Conversation "1" --> "N" Message : contains
+  Conversation "1" *-- "N" Message : contains
   Message "1" --> "0..1" MessageFeedback : rated_by
-  User "M" --> "N" MessageBookmark : creates_bookmark
+  User "1" --> "N" MessageBookmark : creates_bookmark
   Message "1" --> "N" MessageBookmark : marked_in
   User "1" --> "N" PromptTemplate : authors
   PromptTemplate "1" --> "N" WorkspacePromptTemplate : shared_via
   Workspace "1" --> "N" WorkspacePromptTemplate : exposes
   User "1" --> "N" SupportTicket : opens
-  SupportAgent "1" --> "N" SupportTicket : handles
+  SupportAgent "0..1" --> "N" SupportTicket : handles
 
-https://mermaid.ai/live/edit#pako:eNqdVm1r2zAQ_itGX5eGvDRp4w-DtSMwRkfZOgYjYBRZtbXYkpHktFnpf99JsWzZsdNtn-I76e65R3d6lBdERExRiEiGlfrIcCJxvuFBYO3ggVEZvBg7CN5pMCIWB_effQfHOa1sIpSuPnOqFE5olLGcOV8hRYQJgRXjeG1QvisPpVR9KOBYO4eHSHPMMocuKdZM8CjG2q1nmCcl1NEBvGFZxnjylRIh4x7kBqvAh5xyHeVUpyKunNtjeITjWJ6y-cT3ghFap2VHu8XJQa0HSboojwzORcl1pzClsS67JfwQcqcK7BXx5DytMsQTHz7bPVMMmDJ98A-YxhHWQ3B3NN96rWyBrge5S5E5zF-C8T6EeyqV4LjOXBztHjIn2T1GjCstS2KGRL3F6VbwPYDYiaphiec8389-6l7ZXud1TR-aKXWkWe45qu560YZRpDguVCp0N7Oh2Fr0ON0dL2VNx11Sn0mXYl2nojwGkl6zTJ0RuHUTqivrFHRNabzFZFeDP1aOFrpXUTMeUAtPaozcjr2mzw5WlVvQmN4mVtg3QuxyLHcnN319DndbRUFi1xF_IqXIC_1A8yKDAWo0snL842R6dAhEJ0Ie_v8WDpTWP5J-wU2vUyz7IL6VRSGk_pBAC-q82FgtvgMCrQpKGM5qJikzIE7gTmEeGNlR7T0_xjx_7epaGn6iYMR_pERBuddSc6KZUG1PS1TNj30HN2i6QcHFxXv4-gJf9tkKA5g_RSTbUhVpMbjZvQphYF4Pe7iREX0TYBP5Aear_UaFQYpV7952ckkJZXs6vLV5GsIA5tLfeNe_sRL1MDDibPc3OQaz10FQNjyexjgf2dLbMEikKIthFu49aDg4zwZNxuOzqbHWmKSm4WIwfyfE6rKFaS10o5y-hoGRQlydlvP6u6sau9oI_bN3e3sYbEtX0gDLCoKKnF4NYfZHVwrH-PBZt-UEDrCE_0LyeOrttcFxOMlRKcye4b8cqJMM9LmAazs8Im0RgUGBe293t0TsragU8zijCo1QIlmMQvj_QEcopxJ0DUxkxWmDdEpBPFAInzF9xGWmN2jDXyGswPynELmLhLFOUhQ-4kyBVRZG_ap_3fUW-9Demv96KJyuZjYHCl_QM5iL6Xg-Wyznl7PJ1Xyymo7QwXjn4-VkPlleTxazxWp1efU6Qr8t6mS8XCyup9dXsL5aTBavfwA63dif
+https://mermaid.ai/live/edit#pako:eNqdVttu2zgQ_RWBj21sxHZsbfRQYNtugKJo0e4mKFAYEGiKkbiWSIGk3LhB_n2HtCiRspR0-2TOiDNnrod-RERkFCWIlFip9wznEldbHkVWjm4ZldGjkaPotQYhZVn05aOv4Lii0d3nD1_v_mrVRCjdHiuqFM5pWrKKOV0tRYoJgS9G8dSD3SkPrFFjYKC4cQoD3B5phVk5CEJSrJngaYa1u1ZinjcQzgD3LStLxvO_KREyGwmgh6zxsaJcpxXVhcha5e5knuIsk-dJfeAHwQjt3LKTHKTmoG4mc3VWXjK4Eg3Xg8CUxroZhvBNyL2qsRfED6cJwhA_-HSJD0wxyJTpo19gmqVYT8F9otXO6-gAtEcZq7QUpUP-VzA-hvOFSiU47vzXJ3kkpbP6enkxrrRsiBkV9VJm7wQ_AIidqw6WeMrnuxoUoJ-pPmyv_7pLH1oqdapZ5SnaHnvWJqNUcVyrQuihZ5Ni8NHL6dNpQ7t03Mb6mQxT7OJUlGeQpNcsE2cKat2b6lY6B72hNNthsu_A71tFgO5FdPMxXHIJIfG8g6rsDmj64NBVswPeGe1lG8JbIfYVlvtn1z6oSa_etbbg3rXHH08pqlrf0qouYZp6Em0V_3NMvaQIWOdCHn9_MSdCm1zQMGav_QWWY0D_NHUtpP4zh3Z03rGRgqyfJ3BVU8Jw2aVVMIPlCPAc7ZaRPdXeY2XE5xeyC6nPVNSMpF5goqbc668pbylUqAlI1_zYV3OLFlsUzWZv4PQZTvZ1S6ICqxTGUhHJgBwnb7tnI4nM82KLnJpXwRhYTyeDV7NZewofMYszuDvmXFJC2YFOX-3fjiSCKf2Fiy3rJ5HhbXu_9_GykSlPZYWh5eV8HhoHbJxEuRRNPR2fey36NJzmZddYa0wK03Qx6X9gYlnbwgQf_K4ZK8e-SWSIErcFc1ofo41xyJzQQrvsu-NkZEOmAyzLECp1BDaFOW7dUh7j07UO-QUK2MD_JXmqevhtciLOfLRkc2D4F2fqzAN9qGF1p0ckJBIYFNh9ezvgs5FxGRoWmGclVegC5ZJlKIE_GPQCVVQCy4GILEdtkS4ocAhK4JjRe9yUeou2_AnMasy_C1E5S5jsvEDJPS4VSE1tSLD9q95ppX2K35n_hChZrJcL6wUlj-gBJcvNfH11vVhsFqurzdVqvV5foCNKZvF6HsOH63i5Xl0t4uv46QL9tMCLebzarP64jJebVXy9ulzGT_8BdW_nHA
