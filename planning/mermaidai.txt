@@ -114,19 +114,19 @@ classDiagram
   User "1" --> "N" Invoice : receives
   User "1" --> "N" Workspace : owns
   User "1" --> "N" WorkspaceMember : joins
-  Workspace "1" --> "N" WorkspaceMember : has_member
+  Workspace "1" *-- "N" WorkspaceMember : has_member
   Workspace "0..1" --> "N" Conversation : groups
-  User "1" --> "N" Persona : owns
+  User "1" *-- "N" Persona : owns
   Persona "0..1" --> "N" Conversation : attached_to
   User "1" --> "N" Conversation : starts
   Conversation "1" *-- "N" Message : contains
-  Message "1" --> "0..1" MessageFeedback : rated_by
+  Message "1" *-- "0..1" MessageFeedback : rated_by
   User "1" --> "N" MessageBookmark : creates_bookmark
   Message "1" --> "N" MessageBookmark : marked_in
-  User "1" --> "N" PromptTemplate : authors
+  User "1" *-- "N" PromptTemplate : authors
   PromptTemplate "1" --> "N" WorkspacePromptTemplate : shared_via
-  Workspace "1" --> "N" WorkspacePromptTemplate : exposes
+  Workspace "1" *-- "N" WorkspacePromptTemplate : exposes
   User "1" --> "N" SupportTicket : opens
   SupportAgent "0..1" --> "N" SupportTicket : handles
 
-https://mermaid.ai/live/edit#pako:eNqdVttu2zgQ_RWBj9vEsBy7TvRQYJs2QFC06O4mKFAYEGiKkVhLpEBSbrxB_n2HMimRspR0-2TOiDNnbjzjJ0RERlGCSImV-sBwLnG14VHUytEdozJ6MnIUvdEgpCyLvn7yFRxXNLr_cvvX_UerJkJpe6yoUjinackq5nS1FCkmBL4YxXMPdq88sEaNgYHixikMsD3SCrNyEISkWDPB0wxrd63EPG8gnAHue1aWjOd_UyJkNhJAD1njQ0W5TiuqC5FZ5fZonuIsk6dJ3fK9YIR2btlRDlJzUDeTuTorLxlciYbrQWBKY90MQ_gm5E7V2Avip9MEYYiffLrEe6YYZMr0wS8wzVKsp-A-02rrdXQA2qOMVVqK0iH_EIyP4XylUgmOO__1UR5J6aS-Xl6MKy0bYkZFvZbZteB7AGnnqoMlnvLlrgYF6GeqD9vrv-7Sh5ZKnWpWeQrbY8_aZJQqjmtVCD30bFIMPno5fT6-0C4d92L9TIYpdnEqyjNI0muWiTMFte5NtZVOQW8ozbaY7DrwB6sI0L2Ibj6Fj1xCSDzvoKr2DWj66NBVswXeGe2lDeG9ELsKy92Lzz6oSa_eWltw79rjj6cUVa3vaFWXME09iVrF_xxTLykC1rmQh99_mBOhTT7QMGav_QWWY0D_NHUtpP4zh3Z03rGRgqxfJnBVU8Jw2aVVMIPlCPAU7Y6RHdXesjLiyw-yC6nPVNSMpF5goqbc668pbylUqAlI1_y0i2yDvmxQdH7-Dk4xnNpVmkQwkopItqUq1cJcbvXHK8fLxsxtjSQy26WtcWqWgufdGPxxfm5P4Q5LogKrwd0x55ISyvZ0-mq_OpIIhvQXLlrSTyJD2-393sfrRhA2LFcjDC3ns1loHJBxEuVSNPV0fG5Z9Gk4zeuusdaYFKbnYtL_wKQl7RYm-OB3zVg58k0iw5PYFsxpfQwb45A4oYXtW98eJiMbEh1gtQShUsdfU5jj1pbxGJ-udUgvUMAG_i7JY9XDb5MTceLDcs2e4V-cqRMP9LGGlzs9IiGPwKDA029vB3Q2Mi5DwwLzrKQKnaFcsgwl8P-CnqGKSiA5EFFLURukCwoUghI4ZvQBN6XeoA1_BrMa8-9CVM4SJjsvUPKASwVSUxsOtP_UO61sN_G1-UuIkou3V60TlDyhRxDXs8VquYiv5qtVvF6tL8_QASVxPJ8t4vX6YrWAD4v1xfL5DP3bwsazebxYzZfLy7fx8nJxsbx6_g-g5-ZF
+https://mermaid.ai/live/edit#pako:eNqdVttu2zgQ_RWBj9vY8C2xo4cC2-4GKIoW3TZBgcKAQEuMxLVECiTlxg3y7x3SpETKktvdJ5PjmTlz4xk9o5RnBMUoLbGUf1GcC1xtWRSZe3RPiYie9T2KXim4JDSLPr33BQxXJHr4-O6fh7-tOOVS2WNFpMQ5SUpaUSerBU9wmsI_WvDSgT1ID6yRQ2AguHMCDWyPpMK07AUhCFaUsyTDyqmVmOUNhNPDfUPLkrL8M0m5yAYC6CBrfKwIU0lFVMEzK9ydzBOcZeI8qXfswGlKWrf0dA9Sc1B3o7k6Ky8ZXPGGqV5gUmHV9EP4ysVe1tgL4ruTBGHw72y8xAcqKWRK1dEvMMkSrMbgPpBq53W0B9qhDFVa8NIh_8spG8L5RITkDLf-69N9IKWz-np5USaVaFI9KvJXmb3l7AAgZq5a2NQTXu5qUIBuprqwvf6rNn1oqVCJopUnsD32rHVGiWS4lgVXfc86xeBPL6cPpxfapuNerJ9JP8U2TklYBkl6zdJxJiBWnamyt3PQO0KyHU73LfijFQToXkR378NHLiAklrdQlXkDijw5dNnsgHcGe2lDeMP5vsJif_HZBzXpxDtrC-5de_zxFLyq1T2p6hKmqSNRK_iPY-ollYJ1zsXx_z_MkdBGH2gYs9f-AoshoC9NXXOh_syhHa13rG9B1pcJXNYkpbhs0yqoxnIEeI52T9M9Ud6y0tfLD7INqcuU1zRNvMB4TZjXX13ekstQEpCu_jGLbIs-blE0mbyG0xxOZpXGEYykTAXdEZkorpWN_KRyUtZmbmvEkd4upsaJXgqed23wx2RiT-EOi6MCy57ukHNBUkIPZFy1Wx1xBEP6G4qW9ONI07bR73z4QQ8bQdiwXPWlbzmbTkPEgIzjKBe8qeVgfbS2WxZdGk7ya9dYKZwWuud8NP-eiSFtAxP80Y_KkW8caZ7EtmBO6mvbGPvECS00b313HI2sT3SAZQhCJo6_zjEvWVvGo2y81iG9QAEb-FwSp6qH_42O0ZkPyzUHin9zps48kKcaXu74CIc8AoMCT99oB3Q2MC59wwKzrCQSXaFc0AzF8H1BrlBFBJAcXJGhqC1SBQEKQTEcM_KIm1Jt0Za9gFmN2TfOK2cJk50XKH7EpYRbU2sOtF_qrVSYTfxWfxKieH1tfKD4GT2heLLcTNer6_XtzWK2vJkvF5srdETx6ma6mK_Xy_lqfb1Zzmablyv0w6DOp7P54nq2Wm1u5qvNYrm6ffkJvxvlsg
