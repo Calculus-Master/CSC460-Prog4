@@ -1,0 +1,132 @@
+classDiagram
+  class Tier {
+    +tier_id PK
+    +tier_name
+    +cost
+    +message_limit
+    +pro_access
+  }
+  class User {
+    +user_id PK
+    +tier_id FK
+    +name
+    +email
+    +creation_date
+    +language
+  }
+  class BillingRecord {
+    +user_id PK FK
+    +payment_method
+    +billing_address
+  }
+  class Invoice {
+    +invoice_id PK
+    +user_id FK
+    +tier_id FK
+    +invoice_date
+    +amount
+    +payment_status
+  }
+  class Workspace {
+    +workspace_id PK
+    +owner_id FK
+    +name
+    +visibility
+    +created_at
+  }
+  class WorkspaceMember {
+    +workspace_id FK
+    +user_id FK
+    +role
+    +joined_at
+  }
+  class Persona {
+    +persona_id PK
+    +owner_user_id FK
+    +name
+    +instructions
+    +created_at
+  }
+  class Conversation {
+    +conversation_id PK
+    +user_id FK
+    +workspace_id FK
+    +persona_id FK
+    +title
+    +start_time
+    +status
+    +persona_name_snapshot
+    +persona_instr_snapshot
+  }
+  class Message {
+    +message_id PK
+    +conversation_id FK
+    +sender_role
+    +time_sent
+    +content
+  }
+  class MessageFeedback {
+    +feedback_id PK
+    +message_id FK
+    +rating
+    +comment_text
+    +submitted_at
+  }
+  class MessageBookmark {
+    +user_id FK
+    +message_id FK
+    +bookmarked_time
+  }
+  class PromptTemplate {
+    +template_id PK
+    +owner_user_id FK
+    +name
+    +text
+    +category
+    +visibility
+    +created_at
+  }
+  class WorkspacePromptTemplate {
+    +workspace_id FK
+    +template_id FK
+    +shared_at
+  }
+  class SupportAgent {
+    +agent_id PK
+    +name
+    +email
+    +specialty
+    +hired_date
+  }
+  class SupportTicket {
+    +ticket_id PK
+    +user_id FK
+    +agent_id FK
+    +topic_name
+    +opened_time
+    +closed_time
+    +status
+  }
+
+  Tier "1" --> "N" User : subscribes_to
+  Tier "1" --> "N" Invoice : billed_at_tier
+  User "1" --> "1" BillingRecord : has
+  User "1" --> "N" Invoice : receives
+  User "1" --> "N" Workspace : owns
+  User "M" --> "N" WorkspaceMember : joins
+  Workspace "1" --> "N" WorkspaceMember : has_member
+  Workspace "1" --> "N" Conversation : groups
+  User "1" --> "N" Persona : owns
+  Persona "0..1" --> "N" Conversation : attached_to
+  User "1" --> "N" Conversation : starts
+  Conversation "1" --> "N" Message : contains
+  Message "1" --> "0..1" MessageFeedback : rated_by
+  User "M" --> "N" MessageBookmark : creates_bookmark
+  Message "1" --> "N" MessageBookmark : marked_in
+  User "1" --> "N" PromptTemplate : authors
+  PromptTemplate "1" --> "N" WorkspacePromptTemplate : shared_via
+  Workspace "1" --> "N" WorkspacePromptTemplate : exposes
+  User "1" --> "N" SupportTicket : opens
+  SupportAgent "1" --> "N" SupportTicket : handles
+
+https://mermaid.ai/live/edit#pako:eNqdVm1r2zAQ_itGX5eGvDRp4w-DtSMwRkfZOgYjYBRZtbXYkpHktFnpf99JsWzZsdNtn-I76e65R3d6lBdERExRiEiGlfrIcCJxvuFBYO3ggVEZvBg7CN5pMCIWB_effQfHOa1sIpSuPnOqFE5olLGcOV8hRYQJgRXjeG1QvisPpVR9KOBYO4eHSHPMMocuKdZM8CjG2q1nmCcl1NEBvGFZxnjylRIh4x7kBqvAh5xyHeVUpyKunNtjeITjWJ6y-cT3ghFap2VHu8XJQa0HSboojwzORcl1pzClsS67JfwQcqcK7BXx5DytMsQTHz7bPVMMmDJ98A-YxhHWQ3B3NN96rWyBrge5S5E5zF-C8T6EeyqV4LjOXBztHjIn2T1GjCstS2KGRL3F6VbwPYDYiaphiec8389-6l7ZXud1TR-aKXWkWe45qu560YZRpDguVCp0N7Oh2Fr0ON0dL2VNx11Sn0mXYl2nojwGkl6zTJ0RuHUTqivrFHRNabzFZFeDP1aOFrpXUTMeUAtPaozcjr2mzw5WlVvQmN4mVtg3QuxyLHcnN319DndbRUFi1xF_IqXIC_1A8yKDAWo0snL842R6dAhEJ0Ie_v8WDpTWP5J-wU2vUyz7IL6VRSGk_pBAC-q82FgtvgMCrQpKGM5qJikzIE7gTmEeGNlR7T0_xjx_7epaGn6iYMR_pERBuddSc6KZUG1PS1TNj30HN2i6QcHFxXv4-gJf9tkKA5g_RSTbUhVpMbjZvQphYF4Pe7iREX0TYBP5Aear_UaFQYpV7952ckkJZXs6vLV5GsIA5tLfeNe_sRL1MDDibPc3OQaz10FQNjyexjgf2dLbMEikKIthFu49aDg4zwZNxuOzqbHWmKSm4WIwfyfE6rKFaS10o5y-hoGRQlydlvP6u6sau9oI_bN3e3sYbEtX0gDLCoKKnF4NYfZHVwrH-PBZt-UEDrCE_0LyeOrttcFxOMlRKcye4b8cqJMM9LmAazs8Im0RgUGBe293t0TsragU8zijCo1QIlmMQvj_QEcopxJ0DUxkxWmDdEpBPFAInzF9xGWmN2jDXyGswPynELmLhLFOUhQ-4kyBVRZG_ap_3fUW-9Demv96KJyuZjYHCl_QM5iL6Xg-Wyznl7PJ1Xyymo7QwXjn4-VkPlleTxazxWp1efU6Qr8t6mS8XCyup9dXsL5aTBavfwA63dif
