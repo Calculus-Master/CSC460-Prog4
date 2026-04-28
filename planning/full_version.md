@@ -14,39 +14,7 @@ The database models the _user-facing ecosystem_ of an LLM platform: accounts and
 
 Fifteen relations are used. The design targets **3NF** (and in fact achieves BCNF on every relation, which strictly implies 3NF).
 
-## 1.2 E-R Diagram
-
-The diagram below uses crow's-foot notation. When redrawing in draw.io / Lucidchart for the final submission, preserve the entity sets, attributes, relationship cardinalities, and participation constraints shown here.
-
-```mermaid
-erDiagram
-    Tier ||--o{ User : "subscribes_to"
-    Tier ||--o{ Invoice : "billed_at_tier"
-    User ||--|| BillingRecord : "has"
-    User ||--o{ Invoice : "receives"
-    User ||--o{ Conversation : "starts"
-    User ||--o{ Persona : "owns"
-    User ||--o{ PromptTemplate : "authors"
-    User ||--o{ SupportTicket : "opens"
-    User ||--o{ MessageBookmark : "creates"
-    User ||--o{ WorkspaceMember : "joins"
-    User ||--o{ Workspace : "owns_workspace"
-
-    Workspace ||--o{ WorkspaceMember : "has"
-    Workspace ||--o{ Conversation : "groups"
-    Workspace ||--o{ WorkspacePromptTemplate : "exposes"
-
-    Persona }o--o{ Conversation : "attached_to"
-    Conversation ||--o{ Message : "contains"
-    Message ||--o| MessageFeedback : "rated_by"
-    Message ||--o{ MessageBookmark : "marked_in"
-
-    PromptTemplate ||--o{ WorkspacePromptTemplate : "shared_via"
-
-    SupportAgent ||--o{ SupportTicket : "handles"
-```
-
-## 1.3 Entity Sets and Attributes
+## 1.2 Entity Sets and Attributes
 
 | Entity                      | Attributes                                                                                                                                                           |
 | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -204,7 +172,7 @@ erDiagram
 | closed_time | | nullable |
 | status | | |
 
-## 1.4 Relationships and Cardinalities
+## 1.3 Relationships and Cardinalities
 
 | Relationship       | Entities                     | Cardinality                   | Notes                                                                                                                                  |
 | ------------------ | ---------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -226,7 +194,7 @@ erDiagram
 | opens              | User → SupportTicket         | 1:N                           |                                                                                                                                        |
 | handles            | SupportAgent → SupportTicket | 1:N, optional                 | `agent_id` nullable until assignment.                                                                                                  |
 
-## 1.5 Design Rationale
+## 1.4 Design Rationale
 
 **Why `Tier` as its own entity rather than an enum on User.** Tiers carry their own attributes (`message_limit`, `pro_access`, `cost`) that change independently of any specific user. Modeling it separately avoids update anomalies — when the Plus tier's daily limit changes, one row updates instead of every Plus user's record.
 
