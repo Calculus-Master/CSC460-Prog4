@@ -6,12 +6,14 @@ public class BillingMenu {
     public static void show(Connection conn, Scanner sc) throws SQLException {
         boolean back = false;
         while (!back) {
-            System.out.println("--- Billing & Subscriptions ---");
-            System.out.println("1. Generate Invoice");
-            System.out.println("2. Mark Invoice Paid");
-            System.out.println("3. Update Subscription Tier");
-            System.out.println("4. View User Invoices");
-            System.out.println("5. Back");
+            System.out.println("""
+                --- Billing & Subscriptions ---
+                1. Generate Invoice
+                2. Mark Invoice Paid
+                3. Update Subscription Tier
+                4. View User Invoices
+                5. Back
+                """);
             int choice = DBUtil.promptInt(sc, "Choice: ");
             System.out.println();
             switch (choice) {

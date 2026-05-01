@@ -43,14 +43,16 @@ public class UserMenu {
         String address = DBUtil.promptString(sc, "Billing address: ");
 
         try (PreparedStatement ps = conn.prepareStatement(
-                "INSERT INTO \"User\" (tier_id, name, email, creation_date, language) " +
+                "INSERT INTO LLMUser (tier_id, name, email, creation_date, language) " +
                 "VALUES (?, ?, ?, SYSDATE, ?)",
-                new String[]{"user_id"})) {
+                new String[]{"USER_ID"})) {
             ps.setInt(1, tierId);
             ps.setString(2, name);
             ps.setString(3, email);
             ps.setString(4, lang);
             ps.executeUpdate();
+            System.out.println("Inserted new record into User table.");
+
             ResultSet keys = ps.getGeneratedKeys();
             if (keys.next()) {
                 int newId = keys.getInt(1);
@@ -60,6 +62,7 @@ public class UserMenu {
                     bp.setString(2, method);
                     bp.setString(3, address);
                     bp.executeUpdate();
+                    System.out.println("Inserted new record into BillingRecord table.");
                 }
                 System.out.println("User created with ID " + newId + ".");
             }
@@ -78,22 +81,22 @@ public class UserMenu {
                     while (rs.next()) System.out.printf("  %d. %s%n", rs.getInt(1), rs.getString(2));
                 }
                 int newTier = DBUtil.promptInt(sc, "New Tier ID: ");
-                exec(conn, "UPDATE \"User\" SET tier_id=? WHERE user_id=?", newTier, userId);
+                executeUserUpdate(conn, "UPDATE LLMUser SET tier_id=? WHERE user_id=?", newTier, userId);
                 break;
             }
             case 2: {
                 String val = DBUtil.promptString(sc, "New name: ");
-                exec(conn, "UPDATE \"User\" SET name=? WHERE user_id=?", val, userId);
+                executeUserUpdate(conn, "UPDATE LLMUser SET name=? WHERE user_id=?", val, userId);
                 break;
             }
             case 3: {
                 String val = DBUtil.promptString(sc, "New email: ");
-                exec(conn, "UPDATE \"User\" SET email=? WHERE user_id=?", val, userId);
+                executeUserUpdate(conn, "UPDATE LLMUser SET email=? WHERE user_id=?", val, userId);
                 break;
             }
             case 4: {
                 String val = DBUtil.promptString(sc, "New language: ");
-                exec(conn, "UPDATE \"User\" SET language=? WHERE user_id=?", val, userId);
+                executeUserUpdate(conn, "UPDATE LLMUser SET language=? WHERE user_id=?", val, userId);
                 break;
             }
             default: System.out.println("Invalid field.");
@@ -132,7 +135,7 @@ public class UserMenu {
 
         String confirm = DBUtil.promptString(sc, "Type YES to confirm deletion: ");
         if ("YES".equals(confirm)) {
-            try (PreparedStatement ps = conn.prepareStatement("DELETE FROM \"User\" WHERE user_id=?")) {
+            try (PreparedStatement ps = conn.prepareStatement("DELETE FROM LLMUser WHERE user_id=?")) {
                 ps.setInt(1, userId);
                 int rows = ps.executeUpdate();
                 System.out.println(rows > 0 ? "User deleted." : "User not found.");
@@ -146,17 +149,17 @@ public class UserMenu {
         try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(
                 "SELECT u.user_id, u.name, u.email, t.tier_name, u.language " +
-                "FROM \"User\" u JOIN Tier t ON u.tier_id=t.tier_id ORDER BY u.user_id")) {
+                "FROM LLMUser u JOIN Tier t ON u.tier_id=t.tier_id ORDER BY u.user_id")) {
             DBUtil.printResultSet(rs);
         }
     }
 
-    // Helper for simple 2-param updates
-    private static void exec(Connection conn, String sql, Object p1, Object p2) throws SQLException {
+    // Helper for updating various fields in the User table
+    private static void executeUserUpdate(Connection conn, String sql, Object value, int userID) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            if (p1 instanceof Integer) ps.setInt(1, (Integer) p1);
-            else ps.setString(1, (String) p1);
-            ps.setInt(2, (Integer) p2);
+            if (value instanceof Integer i) ps.setInt(1, i);
+            else ps.setString(1, (String)value);
+            ps.setInt(2, userID);
             ps.executeUpdate();
         }
     }

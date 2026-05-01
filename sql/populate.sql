@@ -16,17 +16,17 @@ INSERT INTO SupportAgent (name, email, specialty, hired_date)
 VALUES ('Bob Nguyen', 'bob@support.llm', 'Model Error', DATE '2023-06-01');
 
 -- Users (tier_id: 1=Free,2=Plus,3=Enterprise)
-INSERT INTO "User" (tier_id, name, email, creation_date, language)
+INSERT INTO LLMUser (tier_id, name, email, creation_date, language)
 VALUES (1, 'Carol Smith',   'carol@example.com',   DATE '2024-01-10', 'English');
-INSERT INTO "User" (tier_id, name, email, creation_date, language)
+INSERT INTO LLMUser (tier_id, name, email, creation_date, language)
 VALUES (1, 'Dave Jones',    'dave@example.com',    DATE '2024-02-20', 'English');
-INSERT INTO "User" (tier_id, name, email, creation_date, language)
+INSERT INTO LLMUser (tier_id, name, email, creation_date, language)
 VALUES (2, 'Eva Müller',    'eva@example.com',     DATE '2024-03-05', 'German');
-INSERT INTO "User" (tier_id, name, email, creation_date, language)
+INSERT INTO LLMUser (tier_id, name, email, creation_date, language)
 VALUES (2, 'Frank Lee',     'frank@example.com',   DATE '2024-04-12', 'English');
-INSERT INTO "User" (tier_id, name, email, creation_date, language)
+INSERT INTO LLMUser (tier_id, name, email, creation_date, language)
 VALUES (3, 'Grace Park',    'grace@example.com',   DATE '2024-05-01', 'Korean');
-INSERT INTO "User" (tier_id, name, email, creation_date, language)
+INSERT INTO LLMUser (tier_id, name, email, creation_date, language)
 VALUES (3, 'Hiro Tanaka',   'hiro@example.com',    DATE '2024-06-15', 'Japanese');
 
 -- BillingRecords (one per user)

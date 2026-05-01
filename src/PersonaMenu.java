@@ -6,12 +6,14 @@ public class PersonaMenu {
     public static void show(Connection conn, Scanner sc) throws SQLException {
         boolean back = false;
         while (!back) {
-            System.out.println("--- Persona Management ---");
-            System.out.println("1. Create Persona");
-            System.out.println("2. Update Persona");
-            System.out.println("3. Delete Persona");
-            System.out.println("4. View My Personas");
-            System.out.println("5. Back");
+            System.out.println("""
+                --- Persona Management ---
+                1. Create Persona
+                2. Update Persona
+                3. Delete Persona
+                4. View My Personas
+                5. Back
+                """);
             int choice = DBUtil.promptInt(sc, "Choice: ");
             System.out.println();
             switch (choice) {

@@ -6,13 +6,15 @@ public class WorkspaceMenu {
     public static void show(Connection conn, Scanner sc) throws SQLException {
         boolean back = false;
         while (!back) {
-            System.out.println("--- Workspace Organization ---");
-            System.out.println("1. Create Workspace");
-            System.out.println("2. Modify Workspace");
-            System.out.println("3. Add Member");
-            System.out.println("4. Move Conversation to Workspace");
-            System.out.println("5. View Workspace Members");
-            System.out.println("6. Back");
+            System.out.println("""
+                --- Workspace Organization ---
+                1. Create Workspace
+                2. Modify Workspace
+                3. Add Member
+                4. Move Conversation to Workspace
+                5. View Workspace Members
+                6. Back
+                """);
             int choice = DBUtil.promptInt(sc, "Choice: ");
             System.out.println();
             switch (choice) {
@@ -131,7 +133,7 @@ public class WorkspaceMenu {
         int wsId = DBUtil.promptInt(sc, "Workspace ID: ");
         try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT wm.user_id, u.name, u.email, wm.role, TO_CHAR(wm.joined_at,'YYYY-MM-DD') AS joined " +
-                "FROM WorkspaceMember wm JOIN \"User\" u ON wm.user_id=u.user_id " +
+                "FROM WorkspaceMember wm JOIN LLMUser u ON wm.user_id=u.user_id " +
                 "WHERE wm.workspace_id=? ORDER BY wm.role, u.name")) {
             ps.setInt(1, wsId);
             DBUtil.printResultSet(ps.executeQuery());

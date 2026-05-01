@@ -6,12 +6,14 @@ public class PromptMenu {
     public static void show(Connection conn, Scanner sc) throws SQLException {
         boolean back = false;
         while (!back) {
-            System.out.println("--- Prompt Library ---");
-            System.out.println("1. Add Template");
-            System.out.println("2. Update Template");
-            System.out.println("3. Share Template with Workspace");
-            System.out.println("4. View Templates for User");
-            System.out.println("5. Back");
+            System.out.println("""
+                --- Prompt Library ---
+                1. Add Template
+                2. Update Template
+                3. Share Template with Workspace
+                4. View Templates for User
+                5. Back
+                """);
             int choice = DBUtil.promptInt(sc, "Choice: ");
             System.out.println();
             switch (choice) {

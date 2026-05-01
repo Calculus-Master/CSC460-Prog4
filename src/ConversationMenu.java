@@ -6,14 +6,16 @@ public class ConversationMenu {
     public static void show(Connection conn, Scanner sc) throws SQLException {
         boolean back = false;
         while (!back) {
-            System.out.println("--- Conversations & Messages ---");
-            System.out.println("1. Start Conversation");
-            System.out.println("2. Add Message");
-            System.out.println("3. Update Message Feedback");
-            System.out.println("4. Bookmark Message");
-            System.out.println("5. View Conversation Messages");
-            System.out.println("6. Archive Conversation");
-            System.out.println("7. Back");
+            System.out.println("""
+                --- Conversations & Messages ---
+                1. Start Conversation
+                2. Add Message
+                3. Update Message Feedback
+                4. Bookmark Message
+                5. View Conversation Messages
+                6. Archive Conversation
+                7. Back
+                """);
             int choice = DBUtil.promptInt(sc, "Choice: ");
             System.out.println();
             switch (choice) {
@@ -103,7 +105,7 @@ public class ConversationMenu {
             }
             try (PreparedStatement ps = conn.prepareStatement(
                     "SELECT t.message_limit FROM Tier t " +
-                    "JOIN \"User\" u ON u.tier_id = t.tier_id " +
+                    "JOIN LLMUser u ON u.tier_id = t.tier_id " +
                     "JOIN Conversation c ON c.user_id = u.user_id " +
                     "WHERE c.conversation_id = ?")) {
                 ps.setInt(1, convId);

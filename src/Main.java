@@ -15,8 +15,7 @@ public class Main {
 
         try {
             Class.forName("oracle.jdbc.OracleDriver");
-            conn = DriverManager.getConnection(
-                "jdbc:oracle:thin:@aloe.cs.arizona.edu:1521:ORCL", user, pass);
+            conn = DriverManager.getConnection("jdbc:oracle:thin:@aloe.cs.arizona.edu:1521:oracle", user, pass);
             conn.setAutoCommit(true);
             System.out.println("Connected.\n");
         } catch (ClassNotFoundException e) {
@@ -30,8 +29,10 @@ public class Main {
         boolean running = true;
         while (running) {
             printMainMenu();
+
             int choice = DBUtil.promptInt(scanner, "Choice: ");
             System.out.println();
+
             try {
                 switch (choice) {
                     case 1: UserMenu.show(conn, scanner);         break;
@@ -52,19 +53,21 @@ public class Main {
         }
 
         try { conn.close(); } catch (SQLException ignored) {}
-        System.out.println("Goodbye.");
+        System.out.println("Exiting...");
     }
 
     private static void printMainMenu() {
-        System.out.println("--- Main Menu ---");
-        System.out.println("1. User Account Management");
-        System.out.println("2. Conversations & Messages");
-        System.out.println("3. Workspace Organization");
-        System.out.println("4. Persona Management");
-        System.out.println("5. Prompt Library");
-        System.out.println("6. Billing & Subscriptions");
-        System.out.println("7. Support Tickets");
-        System.out.println("8. Database Queries");
-        System.out.println("9. Exit");
+        System.out.println("""
+                --- Main Menu ---
+                1. User Account Management
+                2. Conversations & Messages
+                3. Workspace Organization
+                4. Persona Management
+                5. Prompt Library
+                6. Billing & Subscriptions
+                7. Support Tickets
+                8. Database Queries
+                9. Exit
+                """);
     }
 }

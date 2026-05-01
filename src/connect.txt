@@ -1,2 +1,2 @@
-sqlpl osanghi@oracle.aloe
-a2368
+sqlpl mallicksap@oracle.aloe
+a6515
