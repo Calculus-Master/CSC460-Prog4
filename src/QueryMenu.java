@@ -74,18 +74,20 @@ public class QueryMenu {
     // Q3: Most helpful persona (highest thumbs-up %)
     private static void queryMostHelpfulPersona(Connection conn) throws SQLException {
         String sql = """
-            SELECT p.name AS persona,
-                   ROUND(100 * SUM(CASE WHEN f.rating = 'Thumbs Up' THEN 1 ELSE 0 END)
-                              / COUNT(f.feedback_id), 2) AS thumbs_up_pct,
-                   COUNT(f.feedback_id) AS total_ratings
-            FROM Persona p
-            JOIN Conversation c ON c.persona_id = p.persona_id
-            JOIN Message m ON m.conversation_id = c.conversation_id AND m.sender_role = 'AI'
-            JOIN MessageFeedback f ON f.message_id = m.message_id
-            GROUP BY p.persona_id, p.name
-            HAVING COUNT(f.feedback_id) > 0
-            ORDER BY thumbs_up_pct DESC
-            FETCH FIRST 1 ROWS ONLY
+            SELECT * FROM (
+                SELECT p.name AS persona,
+                       ROUND(100 * SUM(CASE WHEN f.rating = 'Thumbs Up' THEN 1 ELSE 0 END)
+                                  / COUNT(f.feedback_id), 2) AS thumbs_up_pct,
+                       COUNT(f.feedback_id) AS total_ratings
+                FROM Persona p
+                JOIN Conversation c ON c.persona_id = p.persona_id
+                JOIN Message m ON m.conversation_id = c.conversation_id AND m.sender_role = 'AI'
+                JOIN MessageFeedback f ON f.message_id = m.message_id
+                GROUP BY p.persona_id, p.name
+                HAVING COUNT(f.feedback_id) > 0
+                ORDER BY thumbs_up_pct DESC
+            )
+            WHERE ROWNUM <= 1
             """;
         try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
@@ -118,9 +120,13 @@ public class QueryMenu {
             )
             SELECT persona_name, owner_email, tier_user_count,
                    ROUND(100 * up_count / total_rated, 2) AS thumbs_up_pct
-            FROM persona_ratings
-            ORDER BY thumbs_up_pct DESC, tier_user_count DESC
-            FETCH FIRST 3 ROWS ONLY
+                 FROM (
+                SELECT persona_name, owner_email, tier_user_count,
+                    ROUND(100 * up_count / total_rated, 2) AS thumbs_up_pct
+                FROM persona_ratings
+                ORDER BY thumbs_up_pct DESC, tier_user_count DESC
+                 )
+                 WHERE ROWNUM <= 3
             """;
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, tierName);
