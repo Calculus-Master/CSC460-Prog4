@@ -60,6 +60,17 @@ public class DBUtil {
         return val.isEmpty() ? null : val;
     }
 
+    public static int promptOptionalInt(Scanner sc, String prompt) {
+        String input = promptOptional(sc, prompt);
+        if (input == null) return -1;
+        try {
+            return Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input, ignoring.");
+            return -1;
+        }
+    }
+
     public static void displayTiers(Connection conn, boolean withCost)
     {
         String sql = "SELECT tier_id, tier_name" + (withCost ? ", cost" : "") + " FROM Tier ORDER BY tier_id";
@@ -79,6 +90,18 @@ public class DBUtil {
         } catch(SQLException e)
         {
             System.out.println("Error fetching tiers: " + e.getMessage());
+        }
+    }
+
+    // Helper for checking if an entity with a given ID exists in a specified table, and print a message if not found
+    public static boolean checkExists(Connection conn, int pkID, String tableName, String pkColumn) throws SQLException {
+        String sql = "SELECT * FROM " + tableName + " WHERE " + pkColumn + "=?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, pkID);
+            ResultSet rs = ps.executeQuery();
+            boolean exists = rs.next();
+            if (!exists) System.out.println(tableName + " with ID " + pkID + " not found.");
+            return exists;
         }
     }
 }

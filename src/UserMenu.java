@@ -64,7 +64,7 @@ public class UserMenu {
     private static void updateUser(Connection conn, Scanner sc) throws SQLException {
         // Prompt for user ID and validate that it exists
         int userId = DBUtil.promptInt(sc, "User ID to update: ");
-        if (!checkUserExists(conn, userId)) return;
+        if (!DBUtil.checkExists(conn, userId, "LLMUser", "user_id")) return;
 
         // Prompt for which field within the User table to update
         System.out.println("Update: 1. Tier  2. Name  3. Email  4. Language");
@@ -98,7 +98,7 @@ public class UserMenu {
         int userId = DBUtil.promptInt(sc, "User ID to delete: ");
 
         // Pre-check: user actually exists
-        if(!checkUserExists(conn, userId)) return;
+        if(!DBUtil.checkExists(conn, userId, "LLMUser", "user_id")) return;
 
         // Pre-check: unpaid invoices
         int unpaid = 0;
@@ -144,17 +144,6 @@ public class UserMenu {
                 """;
             ResultSet rs = st.executeQuery(sql);
             DBUtil.printResultSet(rs);
-        }
-    }
-
-    // Helper for checking if a user ID is valid
-    private static boolean checkUserExists(Connection conn, int userID) throws SQLException {
-        try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM LLMUser WHERE user_id=?")) {
-            ps.setInt(1, userID);
-            ResultSet rs = ps.executeQuery();
-            boolean exists = rs.next();
-            if (!exists) System.out.println("User with ID " + userID + " not found.");
-            return exists;
         }
     }
 
