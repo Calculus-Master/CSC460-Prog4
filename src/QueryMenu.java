@@ -17,19 +17,23 @@ public class QueryMenu {
             int choice = DBUtil.promptInt(sc, "Choice: ");
             System.out.println();
             switch (choice) {
-                case 1: queryBookmarks(conn, sc);      break;
-                case 2: queryUnpaidInvoices(conn);     break;
-                case 3: queryMostHelpfulPersona(conn); break;
-                case 4: queryTopPersonasByTier(conn, sc); break;
-                case 5: back = true;                   break;
-                default: System.out.println("Invalid option.");
+                case 1 -> queryBookmarks(conn, sc);
+                case 2 -> queryUnpaidInvoices(conn);
+                case 3 -> queryMostHelpfulPersona(conn);
+                case 4 -> queryTopPersonasByTier(conn, sc);
+                case 5 -> back = true;
+                default -> System.out.println("Invalid option.");
             }
         }
     }
 
     // Q1: Bookmarked messages for a user
     private static void queryBookmarks(Connection conn, Scanner sc) throws SQLException {
+        // Prompt for user ID and validate that it exists
         int userId = DBUtil.promptInt(sc, "User ID: ");
+        if (!DBUtil.checkExists(conn, userId, "LLMUser", "user_id")) return;
+
+        // Execute query
         String sql = """
             SELECT c.title AS conversation,
                    SUBSTR(m.content,1,60) AS message_preview,
