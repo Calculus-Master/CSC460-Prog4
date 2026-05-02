@@ -59,4 +59,26 @@ public class DBUtil {
         String val = sc.nextLine().trim();
         return val.isEmpty() ? null : val;
     }
+
+    public static void displayTiers(Connection conn, boolean withCost)
+    {
+        String sql = "SELECT tier_id, tier_name" + (withCost ? ", cost" : "") + " FROM Tier ORDER BY tier_id";
+
+        try(Statement s = conn.createStatement())
+        {
+            ResultSet rs = s.executeQuery(sql);
+            while (rs.next()) {
+                if(withCost) {
+                    System.out.printf("  %d. %s ($%.2f/mo)%n",
+                        rs.getInt(1), rs.getString(2), rs.getDouble(3));
+                } else {
+                    System.out.printf("  %d. %s%n",
+                        rs.getInt(1), rs.getString(2));
+                }
+            }
+        } catch(SQLException e)
+        {
+            System.out.println("Error fetching tiers: " + e.getMessage());
+        }
+    }
 }

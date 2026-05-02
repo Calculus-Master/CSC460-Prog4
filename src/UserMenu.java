@@ -6,35 +6,33 @@ public class UserMenu {
     public static void show(Connection conn, Scanner sc) throws SQLException {
         boolean back = false;
         while (!back) {
-            System.out.println("--- User Account Management ---");
-            System.out.println("1. Add User");
-            System.out.println("2. Update User");
-            System.out.println("3. Delete User");
-            System.out.println("4. View All Users");
-            System.out.println("5. Back");
+            System.out.println("""
+                    --- User Account Management ---
+                    1. Add User
+                    2. Update User
+                    3. Delete User
+                    4. View All Users
+                    5. Back
+                    """);
             int choice = DBUtil.promptInt(sc, "Choice: ");
             System.out.println();
             switch (choice) {
-                case 1: addUser(conn, sc);    break;
-                case 2: updateUser(conn, sc); break;
-                case 3: deleteUser(conn, sc); break;
-                case 4: viewUsers(conn);      break;
-                case 5: back = true;          break;
-                default: System.out.println("Invalid option.");
+                case 1 -> addUser(conn, sc);
+                case 2 -> updateUser(conn, sc);
+                case 3 -> deleteUser(conn, sc);
+                case 4 -> viewUsers(conn);
+                case 5 -> back = true;
+                default -> System.out.println("Invalid option.");
             }
+            System.out.println();
         }
     }
 
     private static void addUser(Connection conn, Scanner sc) throws SQLException {
         // Show available tiers
-        try (Statement st = conn.createStatement();
-             ResultSet rs = st.executeQuery("SELECT tier_id, tier_name, cost FROM Tier ORDER BY tier_id")) {
-            System.out.println("Available tiers:");
-            while (rs.next()) {
-                System.out.printf("  %d. %s ($%.2f/mo)%n",
-                    rs.getInt(1), rs.getString(2), rs.getDouble(3));
-            }
-        }
+        DBUtil.displayTiers(conn, true);
+
+        // Prompt for user details: all information needed for adding a new user and their billing info
         int tierId  = DBUtil.promptInt(sc, "Tier ID: ");
         String name = DBUtil.promptString(sc, "Name: ");
         String email= DBUtil.promptString(sc, "Email: ");
@@ -42,64 +40,56 @@ public class UserMenu {
         String method  = DBUtil.promptString(sc, "Payment method: ");
         String address = DBUtil.promptString(sc, "Billing address: ");
 
-        try (PreparedStatement ps = conn.prepareStatement(
-                "INSERT INTO LLMUser (tier_id, name, email, creation_date, language) " +
-                "VALUES (?, ?, ?, SYSDATE, ?)",
-                new String[]{"USER_ID"})) {
-            ps.setInt(1, tierId);
-            ps.setString(2, name);
-            ps.setString(3, email);
-            ps.setString(4, lang);
-            ps.executeUpdate();
-            System.out.println("Inserted new record into User table.");
+        String sql = "INSERT INTO LLMUser (tier_id, name, email, creation_date, language) VALUES (?, ?, ?, SYSDATE, ?)";
+        PreparedStatement ps = conn.prepareStatement(sql, new String[]{"USER_ID"});
+        ps.setInt(1, tierId);
+        ps.setString(2, name);
+        ps.setString(3, email);
+        ps.setString(4, lang);
+        ps.executeUpdate();
 
-            ResultSet keys = ps.getGeneratedKeys();
-            if (keys.next()) {
-                int newId = keys.getInt(1);
-                try (PreparedStatement bp = conn.prepareStatement(
-                        "INSERT INTO BillingRecord (user_id, payment_method, billing_address) VALUES (?,?,?)")) {
-                    bp.setInt(1, newId);
-                    bp.setString(2, method);
-                    bp.setString(3, address);
-                    bp.executeUpdate();
-                    System.out.println("Inserted new record into BillingRecord table.");
-                }
-                System.out.println("User created with ID " + newId + ".");
-            }
-        }
+        // Pull the new user ID from the inserted record (made with the trigger)
+        ResultSet keys = ps.getGeneratedKeys();
+        if (keys.next()) {
+            int newId = keys.getInt(1);
+            PreparedStatement bp = conn.prepareStatement("INSERT INTO BillingRecord (user_id, payment_method, billing_address) VALUES (?,?,?)");
+            bp.setInt(1, newId);
+            bp.setString(2, method);
+            bp.setString(3, address);
+            bp.executeUpdate();
+            System.out.println("User created with ID " + newId + ".");
+        } else System.out.println("User created, but failed to retrieve new user ID to create a billing record.");
     }
 
     private static void updateUser(Connection conn, Scanner sc) throws SQLException {
+        // Prompt for user ID and validate that it exists
         int userId = DBUtil.promptInt(sc, "User ID to update: ");
+        if (!checkUserExists(conn, userId)) return;
+
+        // Prompt for which field within the User table to update
         System.out.println("Update: 1. Tier  2. Name  3. Email  4. Language");
         int field = DBUtil.promptInt(sc, "Field: ");
+
+        // Prompt for the new value to update the selected field with and update the record
         switch (field) {
-            case 1: {
-                try (Statement st = conn.createStatement();
-                     ResultSet rs = st.executeQuery("SELECT tier_id, tier_name FROM Tier ORDER BY tier_id")) {
-                    System.out.println("Tiers:");
-                    while (rs.next()) System.out.printf("  %d. %s%n", rs.getInt(1), rs.getString(2));
-                }
-                int newTier = DBUtil.promptInt(sc, "New Tier ID: ");
-                executeUserUpdate(conn, "UPDATE LLMUser SET tier_id=? WHERE user_id=?", newTier, userId);
-                break;
+            case 1 -> {
+                DBUtil.displayTiers(conn, false);
+                int val = DBUtil.promptInt(sc, "New Tier ID: ");
+                executeUserUpdate(conn, "UPDATE LLMUser SET tier_id=? WHERE user_id=?", val, userId);
             }
-            case 2: {
+            case 2 -> {
                 String val = DBUtil.promptString(sc, "New name: ");
                 executeUserUpdate(conn, "UPDATE LLMUser SET name=? WHERE user_id=?", val, userId);
-                break;
             }
-            case 3: {
+            case 3 -> {
                 String val = DBUtil.promptString(sc, "New email: ");
                 executeUserUpdate(conn, "UPDATE LLMUser SET email=? WHERE user_id=?", val, userId);
-                break;
             }
-            case 4: {
+            case 4 -> {
                 String val = DBUtil.promptString(sc, "New language: ");
                 executeUserUpdate(conn, "UPDATE LLMUser SET language=? WHERE user_id=?", val, userId);
-                break;
             }
-            default: System.out.println("Invalid field.");
+            default -> System.out.println("Invalid field.");
         }
         System.out.println("Updated.");
     }
@@ -107,10 +97,12 @@ public class UserMenu {
     private static void deleteUser(Connection conn, Scanner sc) throws SQLException {
         int userId = DBUtil.promptInt(sc, "User ID to delete: ");
 
+        // Pre-check: user actually exists
+        if(!checkUserExists(conn, userId)) return;
+
         // Pre-check: unpaid invoices
         int unpaid = 0;
-        try (PreparedStatement ps = conn.prepareStatement(
-                "SELECT COUNT(*) FROM Invoice WHERE user_id=? AND payment_status='Unpaid'")) {
+        try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM Invoice WHERE user_id=? AND payment_status='Unpaid'")) {
             ps.setInt(1, userId);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) unpaid = rs.getInt(1);
@@ -122,8 +114,7 @@ public class UserMenu {
 
         // Pre-check: open/in-progress tickets
         int openTickets = 0;
-        try (PreparedStatement ps = conn.prepareStatement(
-                "SELECT COUNT(*) FROM SupportTicket WHERE user_id=? AND status IN ('Open','In Progress')")) {
+        try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM SupportTicket WHERE user_id=? AND status IN ('Open','In Progress')")) {
             ps.setInt(1, userId);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) openTickets = rs.getInt(1);
@@ -134,7 +125,7 @@ public class UserMenu {
         }
 
         String confirm = DBUtil.promptString(sc, "Type YES to confirm deletion: ");
-        if ("YES".equals(confirm)) {
+        if (confirm.equals("YES")) {
             try (PreparedStatement ps = conn.prepareStatement("DELETE FROM LLMUser WHERE user_id=?")) {
                 ps.setInt(1, userId);
                 int rows = ps.executeUpdate();
@@ -146,11 +137,24 @@ public class UserMenu {
     }
 
     private static void viewUsers(Connection conn) throws SQLException {
-        try (Statement st = conn.createStatement();
-             ResultSet rs = st.executeQuery(
-                "SELECT u.user_id, u.name, u.email, t.tier_name, u.language " +
-                "FROM LLMUser u JOIN Tier t ON u.tier_id=t.tier_id ORDER BY u.user_id")) {
+        try (Statement st = conn.createStatement()) {
+            String sql = """
+                SELECT u.user_id, u.name, u.email, t.tier_name, u.language 
+                FROM LLMUser u JOIN Tier t ON u.tier_id=t.tier_id ORDER BY u.user_id
+                """;
+            ResultSet rs = st.executeQuery(sql);
             DBUtil.printResultSet(rs);
+        }
+    }
+
+    // Helper for checking if a user ID is valid
+    private static boolean checkUserExists(Connection conn, int userID) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM LLMUser WHERE user_id=?")) {
+            ps.setInt(1, userID);
+            ResultSet rs = ps.executeQuery();
+            boolean exists = rs.next();
+            if (!exists) System.out.println("User with ID " + userID + " not found.");
+            return exists;
         }
     }
 
