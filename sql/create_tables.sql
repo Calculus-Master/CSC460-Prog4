@@ -1,9 +1,4 @@
--- CSc 460 Program 4 — LLM Platform Database
--- create_tables.sql: DDL for all 15 tables in dependency order
--- Run on aloe.cs.arizona.edu via SQL*Plus
-
-
--- Drop all triggers first (ignore errors if none exist)
+-- Drop triggers before tables to avoid constraint conflicts
 BEGIN
     FOR tr IN (SELECT trigger_name FROM user_triggers) LOOP
         EXECUTE IMMEDIATE 'DROP TRIGGER "' || tr.trigger_name || '"';
@@ -12,7 +7,7 @@ END;
 /
 
 
--- Drop in reverse dependency order (ignore errors if tables don't exist)
+-- Drop tables; cascade handles FK dependencies
 BEGIN
     FOR t IN (SELECT table_name FROM user_tables) LOOP
         EXECUTE IMMEDIATE 'DROP TABLE "' || t.table_name || '" CASCADE CONSTRAINTS';
@@ -21,7 +16,7 @@ END;
 /
 
 
--- Drop sequences used for auto-increment behavior (ignore errors if they don't exist)
+-- Drop sequences
 BEGIN
     FOR s IN (
         SELECT sequence_name
@@ -80,7 +75,7 @@ END;
 /
 
 
--- 3. LLMUser (quoted — Oracle reserved word)
+-- 3. LLMUser
 CREATE TABLE LLMUser (
     user_id        NUMBER        PRIMARY KEY,
     tier_id        NUMBER        NOT NULL REFERENCES Tier(tier_id),

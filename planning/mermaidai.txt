@@ -6,7 +6,7 @@ classDiagram
     +message_limit
     +pro_access
   }
-  class User {
+  class LLMUser {
     +user_id PK
     +tier_id FK
     +name
@@ -108,25 +108,25 @@ classDiagram
     +status
   }
 
-  User "0..N" --> "1" Tier : subscribes_to
+  LLMUser "0..N" --> "1" Tier : subscribes_to
   Tier "1" --> "0..N" Invoice : billed_at_tier
-  User "1" *-- "1" BillingRecord : has
-  User "1" --> "0..N" Invoice : receives
-  User "1" --> "0..N" Workspace : owns
-  User "1" --> "0..N" WorkspaceMember : joins
+  LLMUser "1" *-- "1" BillingRecord : has
+  LLMUser "1" --> "0..N" Invoice : receives
+  LLMUser "1" --> "0..N" Workspace : owns
+  LLMUser "1" --> "0..N" WorkspaceMember : joins
   Workspace "1" *-- "1..N" WorkspaceMember : has_member
   Workspace "0..1" --> "0..N" Conversation : groups
-  User "1" *-- "0..N" Persona : owns
+  LLMUser "1" *-- "0..N" Persona : owns
   Persona "0..1" --> "0..N" Conversation : attached_to
-  User "1" --> "0..N" Conversation : starts
+  LLMUser "1" --> "0..N" Conversation : starts
   Conversation "1" *-- "1..N" Message : contains
   Message "1" *-- "0..1" MessageFeedback : rated_by
-  User "1" --> "0..N" MessageBookmark : creates_bookmark
+  LLMUser "1" --> "0..N" MessageBookmark : creates_bookmark
   Message "1" --> "0..N" MessageBookmark : marked_in
-  User "1" *-- "0..N" PromptTemplate : authors
+  LLMUser "1" *-- "0..N" PromptTemplate : authors
   PromptTemplate "1" --> "0..N" WorkspacePromptTemplate : shared_via
   Workspace "1" *-- "0..N" WorkspacePromptTemplate : exposes
-  User "1" --> "0..N" SupportTicket : opens
+  LLMUser "1" --> "0..N" SupportTicket : opens
   SupportAgent "0..1" --> "0..N" SupportTicket : handles
 
 https://mermaid.ai/live/edit#pako:eNqdVm1vnDgQ_ivIH--S1b50c4EPla69RqqqVu01UaVqJeQ1DvgWbGSbbbZR_vuNWRtsliVpP8EMnnnmzc_wiIjIKEoQKbFS_zCcS1xteBS1cnTLqIwejRxFf2oQUpZFnz_4Co4rGt19ev_l7p1VE6G0fa2oUjinackq5nS1FCkmBL4YxVMPdqc8sEaNgYHixikMsH2lFWblIAhJsWaCpxnW7liJed5AOAPcN6wsGc__pUTIbCSAHrLGh4pynVZUFyKzyu3RPMVZJk-Tes_3ghHauWVHOUjNQd2czdVZecngSjRcDwJTGutmGMI3IXeqxl4QP5wmCEP84OdLvGeKQaZMH_wC0yzF-hzcR1ptvY4OQHuUsUpLUTrk_wTjYzifqVSC485_fZRHUjqpr5cX40rLhphRUc9l9lbwPYC0c9XBEk853dWgAP1M9WF7_ddd-tBSqVPNKk9he-xZm4xSxXGtCqGHnk2KwUcvp4_HG9ql426sn8kwxS5ORXkGSXrNMnGmoNa9qbbSKegNpdkWk10Hfm8VAboX0c2H8JJLCInnHVTV3gFNHxy6arbAO6O9tCG8EWJXYbmbvPZBTXr11tqCe9cefzylqGp9S6u6hGnqSdQqfnFMvaQIWOdCHn7_Yp4J7ewFDWP22l9gOQb0talrIfXfObSj846NFGQ9TeCqpoThskurYAbLEeAp2i0jO6q9ZWXE6QvZhdRnKmpGUi8wUVPu9deUtxQq1ASkax7tItug-Wz2aYOiy8vXICzgrd2mSQRTqYhkW6pSLcz5Vn88cjxsLd3uSCKzY9pKp2Y1eBjG5o_LS_sWbrIkKrAanD3jX1JC2Z5Onu7XSBLBwL7srN0BSWRYvDXp3QTRn7ODFGDdGmFoDFAnuAFDJ1EuRVOr0XJZA7dE-pSc5kUAWGtMCjMOYqocA6uW0luw4MNIPRw7J5EhUmxL6LSDfBa9Qces0NqWDLaHqfiGZAhwLYmo1HHcKewzDiwxMj5Z_ZCIoJ4N_FjJYx_Cb1NDduLGEtOe4fMT96wT-lDDTZ8c85B6YIaALVqDgAHHJ2loW2CelQYOXaBcsgwl8F9CL1BFJZAjiKiltg3SBQXqQQm8ZvQeN6XeoA1_ArMa8-9CVM4Shj8vUHKPSwVSUxvutH_43ZF2gb81f5IoWbceUPKIHlCymi9n11fxehnPl68W1wv4eEDJcrWereKr5Xx5vYrnr-L46QL9bCHns9XVar1c_XW9WMbxOl7Mr57-Bwqk7-c

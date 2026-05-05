@@ -1,6 +1,6 @@
--- CSc 460 Program 4 — Triggers
+-- CSc 460 Program 4 -- Triggers
 
--- Trigger 1: MessageFeedback may only be placed on AI messages
+-- Ensure feedback is only submitted on AI-generated messages
 CREATE OR REPLACE TRIGGER trg_feedback_ai_only
 BEFORE INSERT OR UPDATE ON MessageFeedback
 FOR EACH ROW
@@ -13,12 +13,12 @@ BEGIN
 
     IF v_role <> 'AI' THEN
         RAISE_APPLICATION_ERROR(-20001,
-            'Feedback can only be given on AI messages (sender_role = AI).');
+            'Feedback can only be given on AI messages.');
     END IF;
 END;
 /
 
--- Trigger 2: WorkspacePromptTemplate requires template visibility = SHARED
+-- Prevent adding private templates to a workspace
 CREATE OR REPLACE TRIGGER trg_wpt_shared_only
 BEFORE INSERT ON WorkspacePromptTemplate
 FOR EACH ROW

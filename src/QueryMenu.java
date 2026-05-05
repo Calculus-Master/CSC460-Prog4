@@ -105,49 +105,26 @@ public class QueryMenu {
             return;
 
         String sql = """
-                                SELECT c.title, c.start_time, c.persona_name_snapshot,
-                       COUNT(m.message_id) AS ai_message_count
-                FROM Conversation c
-                JOIN Message m ON m.conversation_id = c.conversation_id AND m.sender_role = 'AI'
-                WHERE c.user_id = ?
-                  AND c.persona_id IS NOT NULL
-                GROUP BY c.title, c.start_time, c.persona_name_snapshot
-                ORDER BY c.start_time DESC
-                                """;
-        // String tierName = DBUtil.promptString(sc, "Tier name (Free / Plus /
-        // Enterprise): ");
-        // String sql = """
-        // WITH tier_users AS (
-        // SELECT u.user_id FROM LLMUser u
-        // JOIN Tier t ON u.tier_id = t.tier_id WHERE t.tier_name = ?
-        // ),
-        // persona_ratings AS (
-        // SELECT p.persona_id, p.name AS persona_name, o.email AS owner_email,
-        // COUNT(DISTINCT c.user_id) AS tier_user_count,
-        // SUM(CASE WHEN f.rating = 'Thumbs Up' THEN 1 ELSE 0 END) AS up_count,
-        // COUNT(f.feedback_id) AS total_rated
-        // FROM Persona p
-        // JOIN LLMUser o ON p.owner_user_id = o.user_id
-        // JOIN Conversation c ON c.persona_id = p.persona_id
-        // JOIN tier_users tu ON tu.user_id = c.user_id
-        // JOIN Message m ON m.conversation_id = c.conversation_id AND m.sender_role =
-        // 'AI'
-        // JOIN MessageFeedback f ON f.message_id = m.message_id
-        // GROUP BY p.persona_id, p.name, o.email
-        // HAVING COUNT(f.feedback_id) > 0
-        // )
-        // SELECT persona_name, owner_email, tier_user_count,
-        // ROUND(100 * up_count / total_rated, 2) AS thumbs_up_pct
-        // FROM (
-        // SELECT persona_name, owner_email, tier_user_count,
-        // ROUND(100 * up_count / total_rated, 2) AS thumbs_up_pct
-        // FROM persona_ratings
-        // ORDER BY thumbs_up_pct DESC, tier_user_count DESC
-        // )
-        // WHERE ROWNUM <= 3
-        // """;
+                SELECT
+                    c.title,
+                    c.start_time,
+                    c.persona_name_snapshot,
+                    COUNT(m.message_id) AS ai_message_count
+                FROM
+                    Conversation c
+                    JOIN Message m ON m.conversation_id = c.conversation_id
+                    AND m.sender_role = 'AI'
+                WHERE
+                    c.user_id = ?
+                    AND c.persona_id IS NOT NULL
+                GROUP BY
+                    c.title,
+                    c.start_time,
+                    c.persona_name_snapshot
+                ORDER BY
+                    c.start_time DESC
+                """;
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            // ps.setString(1, tierName);
             ps.setInt(1, userId);
             ResultSet rs = ps.executeQuery();
             System.out.println("Conversations with personas for user '" + userId + "':");
