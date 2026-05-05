@@ -4,7 +4,7 @@
 
 **ER Diagram:**
 
-![er_diagram](./planning/er_diagram.png)
+![er_diagram](./planning/er_diagram.svg)
 
 ## 1.1 Entity Sets and Attributes
 
@@ -88,13 +88,13 @@ These business rules are enforced in application logic (JDBC) and/or Oracle trig
 
 ## 2.1 ER-to-Relational Conversion
 
-- Every regular entity becomes one table whose PK is the ER identifier.
-- The 1:1 relationship LLMUser <--> BillingRecord is merged into BillingRecord with `user_id` as PK+FK (no separate junction).
-- 1:N relationships become FKs on the N-side: `user_id` on Conversation, Invoice, Persona, PromptTemplate, SupportTicket; `workspace_id` on Conversation; `persona_id` on Conversation; `agent_id` on SupportTicket; `tier_id` on LLMUser and Invoice.
-- M:N relationships become associative tables with composite PKs: `WorkspaceMember`, `MessageBookmark`, `WorkspacePromptTemplate`.
-- Optional participation becomes nullable FKs: Conversation.workspace_id, Conversation.persona_id, SupportTicket.agent_id, SupportTicket.closed_time.
-- The 1:0..1 Message <--> MessageFeedback is realized as a separate relation keyed by surrogate `feedback_id` with `UNIQUE(message_id)`.
-- Derived attributes like resolution duration are not stored; they are computed in queries.
+1. Every regular entity becomes one table whose PK is the ER identifier.
+2. The 1:1 relationship LLMUser <--> BillingRecord is merged into BillingRecord with `user_id` as PK+FK (no separate junction).
+3. 1:N relationships become FKs on the N-side: `user_id` on Conversation, Invoice, Persona, PromptTemplate, SupportTicket; `workspace_id` on Conversation; `persona_id` on Conversation; `agent_id` on SupportTicket; `tier_id` on LLMUser and Invoice.
+4. M:N relationships become associative tables with composite PKs: `WorkspaceMember`, `MessageBookmark`, `WorkspacePromptTemplate`.
+5. Optional participation becomes nullable FKs: Conversation.workspace_id, Conversation.persona_id, SupportTicket.agent_id, SupportTicket.closed_time.
+6. The 1:0..1 Message <--> MessageFeedback is realized as a separate relation keyed by surrogate `feedback_id` with `UNIQUE(message_id)`.
+7. Derived attributes like resolution duration are not stored; they are computed in queries.
 
 ## 2.2 Relational Schema
 
@@ -120,7 +120,7 @@ All attributes NOT NULL unless noted as nullable.
 
 # 3. Normalization Analysis
 
-Every relation is in BCNF, which implies 3NF. What follows if an analysis of the FDs of each relation.
+Every relation is in BCNF, which implies 3NF. What follows is an analysis of the FDs of each relation.
 
 **Tier**  
 FDs:
