@@ -1,8 +1,68 @@
 import java.sql.*;
 import java.util.Scanner;
 
+/*+----------------------------------------------------------------------
+ ||
+ ||  Class SupportMenu
+ ||
+ ||         Author:  Ojas Sanghi, Saptarshi Mallick
+ ||
+ ||        Purpose:  Provides the Support Tickets submenu of the LLM Platform
+ ||                  Management System.  Allows operators to open new support
+ ||                  tickets (defaulted to 'Open' status with no assigned
+ ||                  agent), assign an available support agent to a ticket
+ ||                  (setting status to 'In Progress'), resolve or escalate a
+ ||                  ticket (recording a closed_time), and view all currently
+ ||                  open or in-progress tickets.
+ ||
+ ||  Inherits From:  None.
+ ||
+ ||     Interfaces:  None.
+ ||
+ |+-----------------------------------------------------------------------
+ ||
+ ||      Constants:  None.
+ ||
+ |+-----------------------------------------------------------------------
+ ||
+ ||   Constructors:  None defined (static-only class).
+ ||
+ ||  Class Methods:  show(Connection, Scanner) -- displays the Support Tickets
+ ||                      menu and dispatches to sub-operations.
+ ||                  createTicket(Connection, Scanner) -- inserts a new
+ ||                      SupportTicket row with status 'Open'.
+ ||                  assignAgent(Connection, Scanner) -- updates a ticket with
+ ||                      an agent_id and sets status to 'In Progress'.
+ ||                  resolveTicket(Connection, Scanner) -- sets a ticket's
+ ||                      status to 'Resolved' or 'Escalated' and records
+ ||                      the closed_time.
+ ||                  viewOpenTickets(Connection) -- displays all tickets with
+ ||                      status 'Open' or 'In Progress'.
+ ||
+ ||  Inst. Methods:  None.
+ ||
+ ++-----------------------------------------------------------------------*/
 public class SupportMenu {
 
+    /*---------------------------------------------------------------------
+     |  Method show
+     |
+     |  Purpose:  Displays the Support Tickets submenu in a loop, reading
+     |      the user's choice and dispatching to createTicket, assignAgent,
+     |      resolveTicket, or viewOpenTickets until the user selects "Back".
+     |
+     |  Pre-condition:  conn is an open, valid JDBC Connection to the Oracle
+     |      database.  sc is an open Scanner connected to stdin.
+     |
+     |  Post-condition: The user has selected "Back"; control returns to
+     |      the main menu loop.
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |      sc   -- Scanner for reading user input from stdin.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     public static void show(Connection conn, Scanner sc) throws SQLException {
         boolean back = false;
         while (!back) {
@@ -27,6 +87,27 @@ public class SupportMenu {
         }
     }
 
+    /*---------------------------------------------------------------------
+     |  Method createTicket
+     |
+     |  Purpose:  Creates a new SupportTicket row for the specified user with
+     |      status 'Open' and no assigned agent.  The operator selects a topic
+     |      from a fixed list: Billing, Model Error, Account, Feature Request,
+     |      or Other.  The auto-generated ticket_id is printed on success.
+     |
+     |  Pre-condition:  conn is open.  sc is ready to read input.  The
+     |      specified user_id exists in LLMUser.
+     |
+     |  Post-condition: A new SupportTicket row with status 'Open' and
+     |      opened_time = SYSTIMESTAMP has been inserted.  The new ticket_id
+     |      is printed to stdout.
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |      sc   -- Scanner for reading user input from stdin.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     private static void createTicket(Connection conn, Scanner sc) throws SQLException {
         // Prompt for user ID and validate that it exists
         int userId = DBUtil.promptInt(sc, "User ID: ");
@@ -50,6 +131,28 @@ public class SupportMenu {
         }
     }
 
+    /*---------------------------------------------------------------------
+     |  Method assignAgent
+     |
+     |  Purpose:  Assigns a support agent to an existing ticket and sets the
+     |      ticket's status to 'In Progress'.  Displays all available agents
+     |      (from the SupportAgent table) before prompting, so the operator
+     |      can choose an appropriate agent.  Both the ticket_id and agent_id
+     |      are validated for existence before the UPDATE is issued.
+     |
+     |  Pre-condition:  conn is open.  sc is ready to read input.  The
+     |      SupportTicket and SupportAgent tables exist with at least one agent.
+     |
+     |  Post-condition: The target SupportTicket row's agent_id has been set
+     |      and its status set to 'In Progress'.  A confirmation message is
+     |      printed to stdout.
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |      sc   -- Scanner for reading user input from stdin.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     private static void assignAgent(Connection conn, Scanner sc) throws SQLException {
         // Show available agents
         try (Statement st = conn.createStatement();
@@ -75,6 +178,27 @@ public class SupportMenu {
         }
     }
 
+    /*---------------------------------------------------------------------
+     |  Method resolveTicket
+     |
+     |  Purpose:  Closes an existing support ticket by setting its status
+     |      to either 'Resolved' (issue addressed) or 'Escalated' (requires
+     |      higher-level attention) and recording the current timestamp as
+     |      closed_time.
+     |
+     |  Pre-condition:  conn is open.  sc is ready to read input.  The
+     |      specified ticket_id exists in the SupportTicket table.
+     |
+     |  Post-condition: The target SupportTicket row's status has been set
+     |      to 'Resolved' or 'Escalated', and closed_time has been set to
+     |      SYSTIMESTAMP.  The new status is printed to stdout.
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |      sc   -- Scanner for reading user input from stdin.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     private static void resolveTicket(Connection conn, Scanner sc) throws SQLException {
         // Prompt for ticket ID and validate that it exists
         int ticketId = DBUtil.promptInt(sc, "Ticket ID: ");
@@ -93,6 +217,26 @@ public class SupportMenu {
         }
     }
 
+    /*---------------------------------------------------------------------
+     |  Method viewOpenTickets
+     |
+     |  Purpose:  Retrieves and displays all support tickets whose status is
+     |      'Open' or 'In Progress', showing ticket ID, the submitting user's
+     |      email, the assigned agent's name (NULL if unassigned), the topic,
+     |      the opened timestamp, and the current status.  Results are ordered
+     |      by opened_time ascending (oldest first).
+     |
+     |  Pre-condition:  conn is open.  The SupportTicket, LLMUser, and
+     |      SupportAgent tables exist.
+     |
+     |  Post-condition: All open and in-progress tickets have been printed to
+     |      stdout.  The database is unchanged.
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     private static void viewOpenTickets(Connection conn) throws SQLException {
         try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery("""

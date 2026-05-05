@@ -1,8 +1,71 @@
 import java.sql.*;
 import java.util.Scanner;
 
+/*+----------------------------------------------------------------------
+ ||
+ ||  Class WorkspaceMenu
+ ||
+ ||         Author:  Ojas Sanghi, Saptarshi Mallick
+ ||
+ ||        Purpose:  Provides the Workspace Organization submenu of the
+ ||                  LLM Platform Management System.  Allows operators to
+ ||                  create workspaces (automatically adding the creator as
+ ||                  an OWNER member), modify a workspace's name or
+ ||                  visibility, add users as MEMBER-role workspace members,
+ ||                  move a conversation into a workspace (subject to an
+ ||                  ownership-membership check), and view the member list
+ ||                  of a workspace.
+ ||
+ ||  Inherits From:  None.
+ ||
+ ||     Interfaces:  None.
+ ||
+ |+-----------------------------------------------------------------------
+ ||
+ ||      Constants:  None.
+ ||
+ |+-----------------------------------------------------------------------
+ ||
+ ||   Constructors:  None defined (static-only class).
+ ||
+ ||  Class Methods:  show(Connection, Scanner) -- displays the Workspace
+ ||                      Organization menu and dispatches to sub-operations.
+ ||                  createWorkspace(Connection, Scanner) -- inserts a new
+ ||                      Workspace row and a corresponding OWNER WorkspaceMember.
+ ||                  modifyWorkspace(Connection, Scanner) -- updates the name
+ ||                      or visibility of an existing Workspace row.
+ ||                  addMember(Connection, Scanner) -- inserts a MEMBER-role
+ ||                      WorkspaceMember row for a given user and workspace.
+ ||                  moveConversation(Connection, Scanner) -- reassigns a
+ ||                      conversation's workspace_id after verifying ownership.
+ ||                  viewMembers(Connection, Scanner) -- displays all members
+ ||                      of a workspace with their roles and join dates.
+ ||
+ ||  Inst. Methods:  None.
+ ||
+ ++-----------------------------------------------------------------------*/
 public class WorkspaceMenu {
 
+    /*---------------------------------------------------------------------
+     |  Method show
+     |
+     |  Purpose:  Displays the Workspace Organization submenu in a loop,
+     |      reading the user's choice and dispatching to createWorkspace,
+     |      modifyWorkspace, addMember, moveConversation, or viewMembers
+     |      until the user selects "Back".
+     |
+     |  Pre-condition:  conn is an open, valid JDBC Connection to the Oracle
+     |      database.  sc is an open Scanner connected to stdin.
+     |
+     |  Post-condition: The user has selected "Back"; control returns to
+     |      the main menu loop.
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |      sc   -- Scanner for reading user input from stdin.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     public static void show(Connection conn, Scanner sc) throws SQLException {
         boolean back = false;
         while (!back) {
@@ -29,6 +92,28 @@ public class WorkspaceMenu {
         }
     }
 
+    /*---------------------------------------------------------------------
+     |  Method createWorkspace
+     |
+     |  Purpose:  Inserts a new Workspace row owned by a given user, then
+     |      automatically inserts a WorkspaceMember row for that user with
+     |      role 'OWNER'.  The auto-generated workspace_id (from a database
+     |      sequence trigger) is retrieved via getGeneratedKeys() so it can
+     |      be used immediately for the member insert.
+     |
+     |  Pre-condition:  conn is open.  sc is ready to read input.  The
+     |      specified owner user_id exists in LLMUser.
+     |
+     |  Post-condition: A new Workspace row and a corresponding OWNER
+     |      WorkspaceMember row have been inserted.  The new workspace_id
+     |      is printed to stdout.
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |      sc   -- Scanner for reading user input from stdin.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     private static void createWorkspace(Connection conn, Scanner sc) throws SQLException {
         // Prompt for workspace owner (user ID) and validate that it exists
         int ownerId = DBUtil.promptInt(sc, "Owner User ID: ");
@@ -66,6 +151,26 @@ public class WorkspaceMenu {
         }
     }
 
+    /*---------------------------------------------------------------------
+     |  Method modifyWorkspace
+     |
+     |  Purpose:  Updates either the name or the visibility of an existing
+     |      Workspace row.  The method presents a two-option field menu,
+     |      prompts for the new value, and issues the corresponding
+     |      parameterized UPDATE statement.
+     |
+     |  Pre-condition:  conn is open.  sc is ready to read input.  The
+     |      specified workspace_id exists in the Workspace table.
+     |
+     |  Post-condition: Either the name or visibility column of the target
+     |      Workspace row has been updated.  "Updated." is printed to stdout.
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |      sc   -- Scanner for reading user input from stdin.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     private static void modifyWorkspace(Connection conn, Scanner sc) throws SQLException {
         // Prompt for workspace ID and validate that it exists
         int wsId = DBUtil.promptInt(sc, "Workspace ID: ");
@@ -94,6 +199,28 @@ public class WorkspaceMenu {
         System.out.println("Updated.");
     }
 
+    /*---------------------------------------------------------------------
+     |  Method addMember
+     |
+     |  Purpose:  Adds a user as a MEMBER-role participant of a workspace.
+     |      Before inserting, the method verifies that the workspace and
+     |      user both exist, and that the user is not already a member of
+     |      the workspace (duplicate membership is rejected gracefully).
+     |
+     |  Pre-condition:  conn is open.  sc is ready to read input.  The
+     |      Workspace and LLMUser tables exist.
+     |
+     |  Post-condition: If the user was not already a member, a new
+     |      WorkspaceMember row with role 'MEMBER' and joined_at =
+     |      SYSTIMESTAMP has been inserted.  Otherwise, the database
+     |      is unchanged and an informational message is shown.
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |      sc   -- Scanner for reading user input from stdin.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     private static void addMember(Connection conn, Scanner sc) throws SQLException {
         // Prompt for workspace ID and validate that it exists
         int wsId = DBUtil.promptInt(sc, "Workspace ID: ");
@@ -123,6 +250,30 @@ public class WorkspaceMenu {
         }
     }
 
+    /*---------------------------------------------------------------------
+     |  Method moveConversation
+     |
+     |  Purpose:  Reassigns a conversation's workspace_id to a target
+     |      workspace.  Before updating, the method verifies that the
+     |      conversation and target workspace both exist, and that the
+     |      conversation owner is a member of the target workspace (a user
+     |      cannot move a conversation into a workspace they do not belong
+     |      to, as they would lose access to it).
+     |
+     |  Pre-condition:  conn is open.  sc is ready to read input.  The
+     |      specified conversation_id and workspace_id exist.
+     |
+     |  Post-condition: If the owner is a member of the target workspace,
+     |      the Conversation row's workspace_id has been updated.
+     |      "Conversation moved." is printed to stdout.  Otherwise the
+     |      database is unchanged and an error message is displayed.
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |      sc   -- Scanner for reading user input from stdin.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     private static void moveConversation(Connection conn, Scanner sc) throws SQLException {
         // Prompt for conversation ID and validate that it exists
         int convId = DBUtil.promptInt(sc, "Conversation ID: ");
@@ -161,6 +312,25 @@ public class WorkspaceMenu {
         }
     }
 
+    /*---------------------------------------------------------------------
+     |  Method viewMembers
+     |
+     |  Purpose:  Retrieves and displays all members of a workspace, showing
+     |      each member's user_id, name, email, role, and join date.  Results
+     |      are ordered by role then alphabetically by name.
+     |
+     |  Pre-condition:  conn is open.  sc is ready to read input.  The
+     |      specified workspace_id exists in the Workspace table.
+     |
+     |  Post-condition: All WorkspaceMember rows for the workspace have been
+     |      printed to stdout.  The database is unchanged.
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |      sc   -- Scanner for reading user input from stdin.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     private static void viewMembers(Connection conn, Scanner sc) throws SQLException {
         // Prompt for workspace ID and validate that it exists
         int wsId = DBUtil.promptInt(sc, "Workspace ID: ");

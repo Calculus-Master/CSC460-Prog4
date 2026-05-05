@@ -1,8 +1,71 @@
 import java.sql.*;
 import java.util.Scanner;
 
+/*+----------------------------------------------------------------------
+ ||
+ ||  Class UserMenu
+ ||
+ ||         Author:  Ojas Sanghi, Saptarshi Mallick
+ ||
+ ||        Purpose:  Provides the User Account Management submenu of the
+ ||                  LLM Platform Management System.  Allows the operator
+ ||                  to add new users (with an associated billing record),
+ ||                  update individual fields of an existing user, delete
+ ||                  a user (subject to unpaid-invoice and open-ticket
+ ||                  guards), and view all users in a formatted table.
+ ||
+ ||  Inherits From:  None.
+ ||
+ ||     Interfaces:  None.
+ ||
+ |+-----------------------------------------------------------------------
+ ||
+ ||      Constants:  None.
+ ||
+ |+-----------------------------------------------------------------------
+ ||
+ ||   Constructors:  None defined (static-only class).
+ ||
+ ||  Class Methods:  show(Connection, Scanner) -- displays the User Account
+ ||                      Management menu and dispatches to sub-operations.
+ ||                  addUser(Connection, Scanner) -- inserts a new LLMUser
+ ||                      row and a corresponding BillingRecord row.
+ ||                  updateUser(Connection, Scanner) -- updates one field of
+ ||                      an existing LLMUser row.
+ ||                  deleteUser(Connection, Scanner) -- deletes an LLMUser
+ ||                      row after verifying no blocking constraints exist.
+ ||                  viewUsers(Connection) -- displays all LLMUser rows
+ ||                      joined with their tier name.
+ ||                  executeUserUpdate(Connection, String, Object, int) --
+ ||                      helper that executes a parameterized UPDATE against
+ ||                      LLMUser for either an integer or string value.
+ ||
+ ||  Inst. Methods:  None.
+ ||
+ ++-----------------------------------------------------------------------*/
 public class UserMenu {
 
+    /*---------------------------------------------------------------------
+     |  Method show
+     |
+     |  Purpose:  Displays the User Account Management submenu in a loop,
+     |      reading the user's menu choice and dispatching to addUser,
+     |      updateUser, deleteUser, or viewUsers until the user selects
+     |      "Back".
+     |
+     |  Pre-condition:  conn is an open, valid JDBC Connection to the Oracle
+     |      database.  sc is an open Scanner connected to stdin.
+     |
+     |  Post-condition: The user has selected "Back"; control returns to
+     |      the main menu loop.  Any database changes made during this
+     |      session have been committed (autoCommit is on).
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |      sc   -- Scanner for reading user input from stdin.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     public static void show(Connection conn, Scanner sc) throws SQLException {
         boolean back = false;
         while (!back) {
@@ -28,6 +91,29 @@ public class UserMenu {
         }
     }
 
+    /*---------------------------------------------------------------------
+     |  Method addUser
+     |
+     |  Purpose:  Collects all information needed to create a new platform
+     |      user and inserts a new row into the LLMUser table followed by
+     |      a corresponding row in the BillingRecord table.  The new user's
+     |      auto-generated user_id (produced by a database sequence trigger)
+     |      is retrieved via getGeneratedKeys() and used as the foreign key
+     |      for the BillingRecord insert.
+     |
+     |  Pre-condition:  conn is open with autoCommit enabled.  The Tier
+     |      table contains at least one row.  sc is ready to read input.
+     |
+     |  Post-condition: A new LLMUser row and a new BillingRecord row have
+     |      been inserted into the database.  The new user's ID is printed
+     |      to stdout.
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |      sc   -- Scanner for reading user input from stdin.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     private static void addUser(Connection conn, Scanner sc) throws SQLException {
         // Show available tiers
         DBUtil.displayTiers(conn, true);
@@ -62,6 +148,26 @@ public class UserMenu {
         } else System.out.println("User created, but failed to retrieve new user ID to create a billing record.");
     }
 
+    /*---------------------------------------------------------------------
+     |  Method updateUser
+     |
+     |  Purpose:  Allows the operator to update one field (tier, name, email,
+     |      or language) of an existing LLMUser row.  The method first
+     |      validates that the target user exists, then presents a field
+     |      selection menu, prompts for the new value, and delegates to
+     |      executeUserUpdate to perform the parameterized SQL UPDATE.
+     |
+     |  Pre-condition:  conn is open.  sc is ready to read input.
+     |
+     |  Post-condition: The selected field of the specified LLMUser row
+     |      has been updated in the database.  "Updated." is printed to stdout.
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |      sc   -- Scanner for reading user input from stdin.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     private static void updateUser(Connection conn, Scanner sc) throws SQLException {
         // Prompt for user ID and validate that it exists
         int userId = DBUtil.promptInt(sc, "User ID to update: ");
@@ -95,6 +201,28 @@ public class UserMenu {
         System.out.println("Updated.");
     }
 
+    /*---------------------------------------------------------------------
+     |  Method deleteUser
+     |
+     |  Purpose:  Deletes an existing LLMUser row after three sequential
+     |      guard checks: (1) the user exists; (2) the user has no unpaid
+     |      invoices; (3) the user has no open or in-progress support
+     |      tickets.  If any guard fails, an explanatory message is printed
+     |      and the deletion is aborted.  Otherwise, the operator must type
+     |      "YES" to confirm before the DELETE is executed.
+     |
+     |  Pre-condition:  conn is open.  sc is ready to read input.
+     |
+     |  Post-condition: If all guards pass and the operator confirmed, the
+     |      LLMUser row (and all cascade-delete dependent rows) has been
+     |      removed from the database.  Otherwise, the database is unchanged.
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |      sc   -- Scanner for reading user input from stdin.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     private static void deleteUser(Connection conn, Scanner sc) throws SQLException {
         int userId = DBUtil.promptInt(sc, "User ID to delete: ");
 
@@ -137,6 +265,24 @@ public class UserMenu {
         }
     }
 
+    /*---------------------------------------------------------------------
+     |  Method viewUsers
+     |
+     |  Purpose:  Retrieves and displays all rows from the LLMUser table,
+     |      joining with Tier to show the human-readable tier name.
+     |      Results are ordered by user_id and formatted by
+     |      DBUtil.printResultSet.
+     |
+     |  Pre-condition:  conn is open and the LLMUser and Tier tables exist.
+     |
+     |  Post-condition: All user rows have been printed to stdout.
+     |      The database is unchanged.
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     private static void viewUsers(Connection conn) throws SQLException {
         try (Statement st = conn.createStatement()) {
             String sql = """
@@ -148,7 +294,31 @@ public class UserMenu {
         }
     }
 
-    // Helper for updating various fields in the User table
+    /*---------------------------------------------------------------------
+     |  Method executeUserUpdate
+     |
+     |  Purpose:  Executes a parameterized SQL UPDATE statement against the
+     |      LLMUser table, binding either an integer or a string as the
+     |      first parameter and the target user_id as the second.  This
+     |      helper centralizes the PreparedStatement lifecycle for the four
+     |      field-update cases in updateUser.
+     |
+     |  Pre-condition:  conn is open.  sql is a two-parameter UPDATE of the
+     |      form "UPDATE LLMUser SET <col>=? WHERE user_id=?".  value is
+     |      either an Integer or a String.  userID identifies an existing row.
+     |
+     |  Post-condition: The specified LLMUser field has been updated.
+     |      The PreparedStatement has been closed.
+     |
+     |  Parameters:
+     |      conn   -- open JDBC Connection to the Oracle database.
+     |      sql    -- the parameterized UPDATE statement to execute.
+     |      value  -- new field value; treated as int if instanceof Integer,
+     |                otherwise cast to String.
+     |      userID -- primary key of the LLMUser row to update.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     private static void executeUserUpdate(Connection conn, String sql, Object value, int userID) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             if (value instanceof Integer i) ps.setInt(1, i);

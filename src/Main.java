@@ -1,10 +1,40 @@
+/*=============================================================================
+ |   Assignment:  Program #4: Database Design and Implementation
+ |       Author:  Ojas Sanghi (osanghi@arizona.edu),
+ |                Saptarshi Mallick (mallicksap@arizona.edu)
+ |       Grader:  Jianwei (James) Shen, Muhammad Bilal
+ |
+ |       Course:  CSC 460 Database Design
+ |   Instructor:  L. McCann
+ |     Due Date:  May 5, 2026, 2:05 PM
+ |
+ |  Description:  A console-based JDBC application that manages an LLM
+ |                platform database hosted on Oracle. The program presents
+ |                a top-level menu with eight  submenus -- User Account
+ |                Management, Conversations & Messages, Workspace
+ |                Organization, Persona Management, Prompt Library, Billing
+ |                & Subscriptions, Support Tickets, and Database Queries --
+ |                each backed by SQL INSERT/UPDATE/DELETE/SELECT statements
+ |                issued through PreparedStatements over a single shared
+ |                JDBC Connection. The application enforces several business
+ |                rules (e.g., per-tier daily message rate limits, deletion
+ |                guards for unpaid invoices and open tickets, and persona
+ |                snapshot capture on conversation start) in the Java layer.
+ |
+ |     Language:  Java 17
+ | Ex. Packages:  oracle.jdbc.OracleDriver (ojdbc8.jar),
+ |                available at /usr/lib/oracle/19.8/client64/lib/ojdbc8.jar
+ |                on lectura.cs.arizona.edu
+ |
+ | Deficiencies:  No known logic errors or unsatisfied requirements.
+ *===========================================================================*/
 import java.sql.*;
 import java.util.Scanner;
 
 public class Main {
 
-    static Connection conn;
-    static Scanner scanner = new Scanner(System.in);
+    static Connection conn;                          
+    static Scanner scanner = new Scanner(System.in); 
 
     public static void main(String[] args) {
         System.out.println("=== LLM Platform Management System ===");
@@ -63,6 +93,22 @@ public class Main {
         System.out.println("Exiting...");
     }
 
+    /*---------------------------------------------------------------------
+     |  Method printMainMenu
+     |
+     |  Purpose:  Prints the top-level main menu to standard output,
+     |      listing all eight functional submenus and the Exit option.
+     |      Called at the start of every iteration of the main menu loop.
+     |
+     |  Pre-condition:  None.
+     |
+     |  Post-condition: The main menu text has been written to stdout.
+     |      No program state is changed.
+     |
+     |  Parameters:  None.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     private static void printMainMenu() {
         System.out.println("""
                 --- Main Menu ---

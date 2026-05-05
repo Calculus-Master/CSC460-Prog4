@@ -1,8 +1,69 @@
 import java.sql.*;
 import java.util.Scanner;
 
+/*+----------------------------------------------------------------------
+ ||
+ ||  Class PromptMenu
+ ||
+ ||         Author:  Ojas Sanghi, Saptarshi Mallick
+ ||
+ ||        Purpose:  Provides the Prompt Library submenu of the LLM Platform
+ ||                  Management System.  Allows operators to add new prompt
+ ||                  templates (with a name, text, category, and visibility),
+ ||                  update any of those fields, share a template with a
+ ||                  workspace (creating a WorkspacePromptTemplate record),
+ ||                  and view all templates owned by a given user.
+ ||
+ ||  Inherits From:  None.
+ ||
+ ||     Interfaces:  None.
+ ||
+ |+-----------------------------------------------------------------------
+ ||
+ ||      Constants:  None.
+ ||
+ |+-----------------------------------------------------------------------
+ ||
+ ||   Constructors:  None defined (static-only class).
+ ||
+ ||  Class Methods:  show(Connection, Scanner) -- displays the Prompt Library
+ ||                      menu and dispatches to sub-operations.
+ ||                  addTemplate(Connection, Scanner) -- inserts a new
+ ||                      PromptTemplate row.
+ ||                  updateTemplate(Connection, Scanner) -- updates one field
+ ||                      of an existing PromptTemplate row.
+ ||                  shareTemplate(Connection, Scanner) -- inserts a
+ ||                      WorkspacePromptTemplate row linking a template to a
+ ||                      workspace, if not already shared.
+ ||                  viewTemplates(Connection, Scanner) -- displays all
+ ||                      PromptTemplate rows owned by a given user.
+ ||                  update(Connection, String, String, int) -- helper that
+ ||                      executes a parameterized string-value UPDATE.
+ ||
+ ||  Inst. Methods:  None.
+ ||
+ ++-----------------------------------------------------------------------*/
 public class PromptMenu {
 
+    /*---------------------------------------------------------------------
+     |  Method show
+     |
+     |  Purpose:  Displays the Prompt Library submenu in a loop, reading
+     |      the user's choice and dispatching to addTemplate, updateTemplate,
+     |      shareTemplate, or viewTemplates until the user selects "Back".
+     |
+     |  Pre-condition:  conn is an open, valid JDBC Connection to the Oracle
+     |      database.  sc is an open Scanner connected to stdin.
+     |
+     |  Post-condition: The user has selected "Back"; control returns to
+     |      the main menu loop.
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |      sc   -- Scanner for reading user input from stdin.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     public static void show(Connection conn, Scanner sc) throws SQLException {
         boolean back = false;
         while (!back) {
@@ -27,6 +88,26 @@ public class PromptMenu {
         }
     }
 
+    /*---------------------------------------------------------------------
+     |  Method addTemplate
+     |
+     |  Purpose:  Inserts a new PromptTemplate row for a given owner user.
+     |      Collects the template name, full text, category, and visibility
+     |      (PRIVATE or SHARED) from the operator, then performs the insert.
+     |      The auto-generated template_id is printed on success.
+     |
+     |  Pre-condition:  conn is open.  sc is ready to read input.  The
+     |      specified owner user_id exists in LLMUser.
+     |
+     |  Post-condition: A new PromptTemplate row has been inserted with
+     |      created_at = SYSTIMESTAMP.  The new template_id is printed.
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |      sc   -- Scanner for reading user input from stdin.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     private static void addTemplate(Connection conn, Scanner sc) throws SQLException {
         // Prompt for owner user ID and validate that it exists
         int ownerId = DBUtil.promptInt(sc, "Owner User ID: ");
@@ -54,6 +135,26 @@ public class PromptMenu {
         }
     }
 
+    /*---------------------------------------------------------------------
+     |  Method updateTemplate
+     |
+     |  Purpose:  Updates one field (name, text, category, or visibility)
+     |      of an existing PromptTemplate row.  Presents a field selection
+     |      menu, prompts for the new value, and delegates to the update()
+     |      helper to execute the parameterized SQL UPDATE.
+     |
+     |  Pre-condition:  conn is open.  sc is ready to read input.  The
+     |      specified template_id exists in the PromptTemplate table.
+     |
+     |  Post-condition: The selected field of the target PromptTemplate row
+     |      has been updated.  "Updated." is printed to stdout.
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |      sc   -- Scanner for reading user input from stdin.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     private static void updateTemplate(Connection conn, Scanner sc) throws SQLException {
         // Prompt for template ID and validate that it exists
         int tmplId = DBUtil.promptInt(sc, "Template ID: ");
@@ -89,6 +190,28 @@ public class PromptMenu {
         System.out.println("Updated.");
     }
 
+    /*---------------------------------------------------------------------
+     |  Method shareTemplate
+     |
+     |  Purpose:  Shares a prompt template with a workspace by inserting a
+     |      WorkspacePromptTemplate row.  Before inserting, the method verifies
+     |      that the template and workspace both exist, and that the template
+     |      is not already shared with that workspace (duplicates are rejected
+     |      gracefully).
+     |
+     |  Pre-condition:  conn is open.  sc is ready to read input.  The
+     |      PromptTemplate and Workspace tables exist.
+     |
+     |  Post-condition: If not already shared, a new WorkspacePromptTemplate
+     |      row has been inserted with shared_at = SYSTIMESTAMP.  Otherwise
+     |      the database is unchanged and an informational message is shown.
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |      sc   -- Scanner for reading user input from stdin.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     private static void shareTemplate(Connection conn, Scanner sc) throws SQLException {
         // Prompt for template ID and validate that it exists
         int tmplId = DBUtil.promptInt(sc, "Template ID: ");
@@ -120,6 +243,25 @@ public class PromptMenu {
         }
     }
 
+    /*---------------------------------------------------------------------
+     |  Method viewTemplates
+     |
+     |  Purpose:  Retrieves and displays all PromptTemplate rows owned by
+     |      the specified user, showing each template's ID, name, category,
+     |      visibility, and creation date.  Results are ordered by template_id.
+     |
+     |  Pre-condition:  conn is open.  sc is ready to read input.  The
+     |      specified user_id exists in LLMUser.
+     |
+     |  Post-condition: All PromptTemplate rows for the user have been
+     |      printed to stdout.  The database is unchanged.
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |      sc   -- Scanner for reading user input from stdin.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     private static void viewTemplates(Connection conn, Scanner sc) throws SQLException {
         // Prompt for owner user ID and validate that it exists
         int userId = DBUtil.promptInt(sc, "User ID: ");
@@ -135,6 +277,30 @@ public class PromptMenu {
         }
     }
 
+    /*---------------------------------------------------------------------
+     |  Method update
+     |
+     |  Purpose:  Executes a parameterized SQL UPDATE statement, binding a
+     |      string as the first parameter and an integer primary key as the
+     |      second.  This helper centralizes PreparedStatement lifecycle
+     |      management for all four field-update cases in updateTemplate.
+     |
+     |  Pre-condition:  conn is open.  sql is a two-parameter UPDATE of the
+     |      form "UPDATE PromptTemplate SET <col>=? WHERE template_id=?".
+     |      val is the new string value.  id is the primary key of the row
+     |      to update.
+     |
+     |  Post-condition: The targeted field of the PromptTemplate row has
+     |      been updated.  The PreparedStatement has been closed.
+     |
+     |  Parameters:
+     |      conn -- open JDBC Connection to the Oracle database.
+     |      sql  -- parameterized UPDATE statement to execute.
+     |      val  -- new string value to bind as the first parameter.
+     |      id   -- primary key value to bind as the second parameter.
+     |
+     |  Returns:  None.
+     *-------------------------------------------------------------------*/
     private static void update(Connection conn, String sql, String val, int id) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, val); 
