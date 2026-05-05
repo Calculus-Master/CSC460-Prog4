@@ -47,6 +47,7 @@ public class UserMenu {
         ps.setString(3, email);
         ps.setString(4, lang);
         ps.executeUpdate();
+        
 
         // Pull the new user ID from the inserted record (made with the trigger)
         ResultSet keys = ps.getGeneratedKeys();

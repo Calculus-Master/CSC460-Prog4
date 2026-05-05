@@ -21,7 +21,7 @@ VALUES (1, 'Carol Smith',   'carol@example.com',   DATE '2024-01-10', 'English')
 INSERT INTO LLMUser (tier_id, name, email, creation_date, language)
 VALUES (1, 'Dave Jones',    'dave@example.com',    DATE '2024-02-20', 'English');
 INSERT INTO LLMUser (tier_id, name, email, creation_date, language)
-VALUES (2, 'Eva Müller',    'eva@example.com',     DATE '2024-03-05', 'German');
+VALUES (2, 'Eva Muller',    'eva@example.com',     DATE '2024-03-05', 'German');
 INSERT INTO LLMUser (tier_id, name, email, creation_date, language)
 VALUES (2, 'Frank Lee',     'frank@example.com',   DATE '2024-04-12', 'English');
 INSERT INTO LLMUser (tier_id, name, email, creation_date, language)
