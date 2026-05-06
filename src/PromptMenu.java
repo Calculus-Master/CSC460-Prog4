@@ -234,6 +234,21 @@ public class PromptMenu {
             return;
         }
 
+        // Check if the template visibility is PRIVATE
+        boolean isPrivate = false;
+        try (PreparedStatement ps = conn.prepareStatement("SELECT visibility FROM PromptTemplate WHERE template_id=?")) {
+            ps.setInt(1, tmplId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                String vis = rs.getString("visibility");
+                isPrivate = vis.equals("PRIVATE");
+            }
+        }
+        if (isPrivate) {
+            System.out.println("Template is set to PRIVATE and cannot be shared in a Workspace.");
+            return;
+        }
+
         // If not, add a new record to WorkspacePromptTemplate
         try (PreparedStatement ps = conn.prepareStatement("INSERT INTO WorkspacePromptTemplate (workspace_id, template_id, shared_at) VALUES (?,?,SYSTIMESTAMP)")) {
             ps.setInt(1, wsId);
