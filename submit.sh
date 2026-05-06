@@ -12,4 +12,4 @@ cp run.sh ./submission/run.sh
 
 tar -cvf submission.tar ./submission
 
-# turnin cs460p4 submission.tar
+turnin cs460p4 submission.tar

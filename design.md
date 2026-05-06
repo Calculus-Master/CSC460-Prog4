@@ -31,7 +31,7 @@
 | Relationship       | Entities                       | Cardinality                   | Notes                                                                                                                                 |
 | ------------------ | ------------------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | subscribes_to      | LLMUser --> Tier               | N:1, total                    | Every user has exactly one current tier.                                                                                              |
-| billed_at_tier     | Invoice --> Tier               | N:1, total                    | Captures which tier was billed at invoice time -- decouples historical invoices from the user's current tier after upgrade/downgrade. |
+| billed_at_tier     | Invoice --> Tier               | N:1, total                    | Captures which tier was billed at invoice time, which decouples historical invoices from the user's current tier after upgrade/downgrade. |
 | has                | LLMUser <--> BillingRecord     | 1:1, total                    | Every user has exactly one billing record.                                                                                            |
 | receives           | LLMUser --> Invoice            | 1:N                           |                                                                                                                                       |
 | owns_workspace     | LLMUser --> Workspace          | 1:N                           | Foreign key `owner_id`.                                                                                                               |
@@ -50,7 +50,7 @@
 
 ## 1.3 Design Rationale
 
-1. **`Tier` as its own entity rather than an enum on User:** Tiers carry their own attributes (`message_limit`, `pro_access`, `cost`) that change independently of any specific user. Modeling it separately avoids update anomalies. When the Plus tier's daily limit changes, one row updates instead of every Plus user's record.
+1. **`Tier` as its own entity rather than an attribute on User:** Tiers carry their own attributes (`message_limit`, `pro_access`, `cost`) that change independently of any specific user. Modeling it separately avoids update anomalies. For example, when the Plus tier's daily limit changes, only one row in The `Tier` table is updated instead of every Plus user's record.
 
 2. **`Invoice` carries a `tier_id` of its own:** An invoice represents a bill for a specific tier at a specific point in time. If the user's tier changes after billing, old invoices must not retroactively appear as if they were billed at the new tier. Giving Invoice its own `tier_id` FK decouples billing history from the user's current tier. The "Generate invoice" operation reads the user's current tier once, snapshots it onto the invoice, and subsequent tier changes leave the invoice untouched.
 
@@ -58,19 +58,19 @@
 
 4. **`Persona` uses snapshots on Conversation:** The spec requires that if a Persona is updated or deleted, the historical context of existing conversations remains coherent. Three options were considered: (a) versioned Persona table (adds complexity and a table); (b) block updates and deletions (violates the deletion use case); (c) snapshot on attach (chosen).
 
-    When a conversation is created with a persona, `persona_name_snapshot` and `persona_instr_snapshot` are copied from the persona into the conversation row. The FK `persona_id` is retained for analytics (Query 3) with ON DELETE SET NULL. The snapshot fields are not functionally determined by `persona_id` -- they record state at attach time, not current state -- making this legitimate point-in-time data analogous to `price_at_purchase` in an order table, not a 3NF violation.
+    When a conversation is created with a persona, `persona_name_snapshot` and `persona_instr_snapshot` are copied from the persona into the conversation row. The FK `persona_id` is retained for analytics (Query 3) with ON DELETE SET NULL. The snapshot fields are not functionally determined by `persona_id`, since they record state at attach time, not current state, making this legitimate point-in-time data analogous to `price_at_purchase` in an order table, not a 3NF violation.
 
-5. **`Conversation.status` is useful:** The spec defines persona deletion in terms of "ongoing conversations." Without a status attribute, every conversation is treated as ongoing forever. `status ∈ {'ACTIVE', 'ARCHIVED'}` gives the persona-deletion guard (`COUNT WHERE persona_id = X AND status = 'ACTIVE' > 5`) a meaningful, manageable interpretation and provides a natural UX for archiving old threads.
+5. **`Conversation.status` is useful:** The spec defines persona deletion in terms of "ongoing conversations." Without a status attribute, every conversation is treated as ongoing forever. `status ∈ {'ACTIVE', 'ARCHIVED'}` lets us have a check to avoid deleting active personas (`COUNT WHERE persona_id = X AND status = 'ACTIVE' > 5`), and is a meaningful, manageable interpretation that provides a natural way to archive old threads.
 
 6. **`MessageFeedback` is a separate relation, not columns on Message:** Feedback is optional and only applies to AI messages. Nullable `rating` and `comment_text` columns on every Message would waste space and muddle semantics. As a separate `1:0..1` table, the presence of a row itself encodes "feedback was given." `MessageFeedback` uses a surrogate `feedback_id` with `UNIQUE(message_id)` rather than `message_id` as PK, to continue enforcing the `1:0..1 `rule.
 
-7. **`PromptTemplate` uses an associative `WorkspacePromptTemplate`:** A prompt template can be shared across multiple workspaces without copying it -- one template row, many workspaces linked to it. The visibility field ('PRIVATE' or 'SHARED') acts as a quick label so you don't have to check the junction table every time. Application logic keeps them consistent: if a template is marked PRIVATE, it can't be added to any workspace (enforced in PromptMenu.java).
+7. **`PromptTemplate` uses an associative `WorkspacePromptTemplate`:** A prompt template can be shared across multiple workspaces without copying it, so one template row may have many workspaces linked to it. The visibility field ('PRIVATE' or 'SHARED') acts as a quick label so you don't have to check the junction table every time. Application logic keeps them consistent: if a template is marked PRIVATE, it can't be added to any workspace (enforced in PromptMenu.java).
 
 8. **`SupportTicket` has no `resolution_duration` column:** Storing `resolution_duration` alongside `opened_time` and `closed_time` would create the FD `{opened_time, closed_time} --> resolution_duration` where the LHS is not a superkey. This is a 3NF violation. Duration is computed at query time (`closed_time - opened_time`). The terminal outcome (Resolved/Escalated) is folded into the `status` column to avoid storing the same information in two places.
 
 ## 1.4 Additional Constraints not in E-R Diagram
 
-These business rules are enforced in application logic (JDBC):
+These data integrity rules are enforced in application logic (JDBC):
 
 1. User deletion must fail if the user has any `Unpaid` invoice or any ticket with `status IN ('Open', 'In Progress')`. Enforced by pre-delete checks in UserMenu.java.
 2. Persona deletion must fail if more than five conversations reference it with `status = 'ACTIVE'`. Enforced by a COUNT guard in `PersonaMenu.java`.
@@ -128,7 +128,7 @@ FDs:
 2. `tier_name --> tier_id, cost, message_limit, pro_access`
 
 Candidate keys: `{tier_id}, {tier_name}`.  
-Both are superkeys. Cost, message_limit, and pro_access are independent facts about the tier, and none determines another. Thus, both BCNF and 3NF
+Both are superkeys. Cost, message_limit, and pro_access are independent facts about the tier, and none determines another. Thus, both BCNF and 3NF.
 
 **LLMUser**  
 FDs:
@@ -136,7 +136,7 @@ FDs:
 2. `email --> user_id, tier_id, name, creation_date, language`
 
 Candidate keys: `{user_id}, {email}`.  
-Both are superkeys. `tier_id` does not determine any other User attribute -- two users can share a tier and differ in every other column. Thus, both BCNF and 3NF.
+Both are superkeys. `tier_id` does not determine any other User attribute since two users can share a tier and differ in every other column. Thus, both BCNF and 3NF.
 
 **BillingRecord**  
 FDs:
@@ -150,7 +150,7 @@ FDs:
 1. `invoice_id --> user_id, tier_id, invoice_date, amount, payment_status`
 
 Candidate keys: `{invoice_id}`.  
-`tier_id` does NOT determine `amount` -- amount is historical and may reflect prorated or discounted values. `invoice_date` does not determine `payment_status`. No non-key FDs exist. Thus, both BCNF and 3NF.
+`tier_id` does NOT determine `amount` as amount is historical and may reflect prorated or discounted values. `invoice_date` does not determine `payment_status`. No non-key FDs exist. Thus, both BCNF and 3NF.
 
 **Workspace**  
 FDs:
@@ -211,7 +211,7 @@ FDs:
 1. `template_id --> owner_user_id, name, text, category, visibility, created_at`
 
 Candidate keys: `{template_id}`.  
-`category` is a free-form user label, not a determinant. `visibility` is a simple flag independent of other attributes. Thus, both BCNF and 3NF.
+`category` is a user-defined label, and so does not functionally determine any other attributes. `visibility` is a simple flag independent of other attributes. Thus, both BCNF and 3NF.
 
 **WorkspacePromptTemplate**  
 FDs:
@@ -233,8 +233,6 @@ FDs:
 1. `ticket_id --> user_id, agent_id, topic_name, opened_time, closed_time, status`
 
 Candidate keys: `{ticket_id}`.  
-Note: we discuss earlier why we do not store a `resolution_duration` column.
-
 Both BCNF and 3NF.
 
 # 4. Self-Designed Query Description
@@ -259,7 +257,7 @@ GROUP  BY c.title, c.start_time, c.persona_name_snapshot
 ORDER  BY c.start_time DESC
 ```
 
-The bind parameter `?` is filled from user input (the operator enters a User ID at the prompt).
+The parameter `?` is filled from user input (the operator enters a User ID at the prompt).
 
 **Requirement Satisfaction**  
 It statisfies the requirements becaseuse:
@@ -268,7 +266,7 @@ It statisfies the requirements becaseuse:
 2. **It uses user-provided information:** the User ID is entered interactively by the operator at runtime and bound as a parameter
 
 **Utility of this Query**  
-This query helps an operator or user understand their personalization history: which personas they have used, how heavily each conversation engaged the AI (AI message count), and in what order they were started. Some examples of uses:
+This query helps a user understand their personalization history: which personas they have used, how heavily each conversation engaged the AI (AI message count), and in what order they were started. Some examples of uses:
 
 1. **User self-service:** a user reviewing their account can see which persona-linked conversations are most active and decide whether to archive old ones.
 2. **Support context:** a support agent handling a billing or usage question can quickly see which personas are associated with a user's recent conversations.

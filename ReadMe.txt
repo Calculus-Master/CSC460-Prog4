@@ -3,7 +3,7 @@ Team: Ojas Sanghi, Saptarshi Mallick
 
 --- COMPILATION ---
 
-Run `run.sh`.
+Run `run.sh`. (Note: this will also execute the program automatically)
 
 Or, manually: `javac -cp "/usr/lib/oracle/19.8/client64/lib/ojdbc8.jar" -d . src/*.java`
 
