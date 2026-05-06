@@ -21,13 +21,15 @@ The program must be run from lectura.cs.arizona.edu, which has network access to
 --- DATABASE SETUP ---
 
 The schema and sample data are already loaded on aloe.cs.arizona.edu under
-the mallicksap account. If you need to reload from scratch, connect via
-SQL*Plus and run these scripts:
+the mallicksap account. To set up your SQL tables, run the following:
 
-1. sql/create_tables.sql -- drops and recreates all tables, sequences, triggers
-2. sql/triggers.sql -- creates application-logic triggers
+First, login: sqlplus mallicksap@oracle.aloe / (password: a6515)
 
-From lectura: sqlplus mallicksap@oracle.aloe / (password: a6515)`
+Then, run these scripts:
+
+@ sql/create_tables.sql -- drops and recreates all tables, sequences, triggers
+@ sql/triggers.sql -- creates application-logic triggers
+@ sql/populate.sql -- populate with placeholder data
 
 --- WORKLOAD DISTRIBUTION ---
 
