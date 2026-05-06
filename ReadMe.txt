@@ -27,8 +27,7 @@ First, login: sqlplus mallicksap@oracle.aloe / (password: a6515)
 
 Then, run these scripts:
 
-@ sql/create_tables.sql -- drops and recreates all tables, sequences, triggers
-@ sql/triggers.sql -- creates application-logic triggers
+@ sql/create_tables.sql -- drops and recreates all tables, sequences, and auto-increment triggers
 @ sql/populate.sql -- populate with placeholder data
 
 --- WORKLOAD DISTRIBUTION ---

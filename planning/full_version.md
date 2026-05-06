@@ -187,7 +187,7 @@ Fifteen relations are used. The design targets **3NF** (and in fact achieves BCN
 | attached_to        | Persona → Conversation       | 1:N, optional                 | `ON DELETE SET NULL`; snapshot fields preserve history.                                                                                |
 | starts             | User → Conversation          | 1:N                           |                                                                                                                                        |
 | contains           | Conversation → Message       | 1:N, total on Message         |                                                                                                                                        |
-| rated_by           | Message → MessageFeedback    | 1:0..1                        | Only AI-role messages may have feedback (enforced by trigger).                                                                         |
+| rated_by           | Message → MessageFeedback    | 1:0..1                        | Only AI-role messages may have feedback (enforced in application logic, ConversationMenu.java).                                         |
 | creates (bookmark) | User ↔ Message               | M:N (MessageBookmark)         | Attribute: `bookmarked_time`.                                                                                                          |
 | authors            | User → PromptTemplate        | 1:N                           |                                                                                                                                        |
 | shared_via         | PromptTemplate ↔ Workspace   | M:N (WorkspacePromptTemplate) | Templates with `visibility = 'SHARED'` may be exposed in one or more workspaces.                                                       |
@@ -216,7 +216,7 @@ The snapshot fields are **not** functionally determined by `persona_id` — they
 
 **Why `MessageFeedback` is a separate relation, not columns on Message.** Feedback is optional and only applies to AI messages. Nullable `rating` and `comment_text` columns on every Message waste space and muddle semantics. As a separate 1:0..1 table, the presence of a row encodes "feedback was given," which matches the domain cleanly and supports Query #3 elegantly.
 
-**Why `PromptTemplate` uses an associative `WorkspacePromptTemplate`.** The spec says _"shared within a Workspace,"_ but the more useful real-world pattern is that a high-quality template authored by one user can be exposed across multiple workspaces they belong to. An M:N junction gives that flexibility without costing anything. The `visibility` column on `PromptTemplate` ('PRIVATE' or 'SHARED') is retained as a fast-path filter and is kept consistent with the junction via a trigger: a PRIVATE template has zero junction rows, a SHARED template has one or more. An alternative — a single nullable `workspace_id` FK on PromptTemplate — is simpler but locks a template to one workspace.
+**Why `PromptTemplate` uses an associative `WorkspacePromptTemplate`.** The spec says _"shared within a Workspace,"_ but the more useful real-world pattern is that a high-quality template authored by one user can be exposed across multiple workspaces they belong to. An M:N junction gives that flexibility without costing anything. The `visibility` column on `PromptTemplate` ('PRIVATE' or 'SHARED') is retained as a fast-path filter and is kept consistent with the junction via application logic: a PRIVATE template has zero junction rows, a SHARED template has one or more. An alternative — a single nullable `workspace_id` FK on PromptTemplate — is simpler but locks a template to one workspace.
 
 **Why `WorkspaceMember` is a first-class associative entity.** The M:N between User and Workspace carries its own attributes (`role` — typically 'OWNER', 'MEMBER' — and `joined_at`), which requires a separate relation. This also enables the required check (Functionality #3: _verify user belongs to a workspace before moving a conversation_) as a direct lookup.
 
@@ -231,14 +231,14 @@ The snapshot fields are **not** functionally determined by `persona_id` — they
 
 ## 1.6 Additional Constraints (Not Expressible in the ERD)
 
-These business rules are enforced in application (JDBC) logic and/or Oracle triggers rather than as simple cardinality constraints:
+These business rules are enforced in application (JDBC) logic rather than as simple cardinality constraints:
 
-1. **User deletion** must fail if the user has any invoice with `payment_status = 'Unpaid'` _or_ any ticket with `status IN ('Open', 'In Progress')`. Implemented as a pre-delete check in the JDBC client (and optionally mirrored by a `BEFORE DELETE` trigger for defense-in-depth).
+1. **User deletion** must fail if the user has any invoice with `payment_status = 'Unpaid'` _or_ any ticket with `status IN ('Open', 'In Progress')`. Implemented as a pre-delete check in the JDBC client.
 2. **Persona deletion** must fail if more than five conversations reference it with `status = 'ACTIVE'`. Implemented in JDBC via a `COUNT(*)` guard.
 3. **Rate-limit check on message insert**: before inserting a new USER-role message, the application counts today's USER-role messages for that user and compares against `Tier.message_limit`.
 4. **Workspace membership check** before moving a conversation into a workspace: verify a row exists in `WorkspaceMember` for `(target_workspace_id, conversation_owner_id)`.
-5. **Feedback role restriction**: `MessageFeedback` rows may only exist for messages where `Message.sender_role = 'AI'`. Enforced by a `BEFORE INSERT/UPDATE` trigger on `MessageFeedback`.
-6. **PromptTemplate visibility consistency**: `visibility = 'PRIVATE'` ⟺ no matching rows in `WorkspacePromptTemplate`; `visibility = 'SHARED'` ⟺ at least one matching row. Enforced by triggers on both tables.
+5. **Feedback role restriction**: `MessageFeedback` rows may only exist for messages where `Message.sender_role = 'AI'`. Enforced by a pre-insert check in `ConversationMenu.java` (`updateFeedback`).
+6. **PromptTemplate visibility consistency**: `visibility = 'PRIVATE'` ⟺ no matching rows in `WorkspacePromptTemplate`. Enforced by a pre-insert check in `PromptMenu.java` (`shareTemplate`).
 7. **SupportTicket status/closed_time consistency**: `status IN ('Resolved', 'Escalated')` ⟺ `closed_time IS NOT NULL`. Enforced as a table-level CHECK.
 8. **Cascade behavior**: `ON DELETE CASCADE` from User → Conversation → Message → MessageFeedback / MessageBookmark; `ON DELETE SET NULL` from Workspace → Conversation.workspace_id and Persona → Conversation.persona_id; `ON DELETE RESTRICT` from Tier → User and Tier → Invoice (tiers shouldn't be deletable while referenced).
 
@@ -301,7 +301,7 @@ Primary keys in **bold**. Foreign keys in _italic_. Required (`NOT NULL`) attrib
 ### MessageFeedback
 
 **feedback_id**†, _message_id_† → Message (ON DELETE CASCADE, UNIQUE), rating† (CHECK IN ('Thumbs Up','Thumbs Down')), comment_text, submitted_at†
-— Trigger: `Message.sender_role` must equal 'AI'.
+— App check (ConversationMenu.java): `Message.sender_role` must equal 'AI'.
 
 ### MessageBookmark
 
@@ -316,7 +316,7 @@ Primary keys in **bold**. Foreign keys in _italic_. Required (`NOT NULL`) attrib
 
 **_workspace_id_**† → Workspace (ON DELETE CASCADE), **_template_id_**† → PromptTemplate (ON DELETE CASCADE), shared_at†
 — **PK = (workspace_id, template_id)**
-— Trigger: `PromptTemplate.visibility` must equal 'SHARED'.
+— App check (PromptMenu.java): `PromptTemplate.visibility` must equal 'SHARED'.
 
 ### SupportAgent
 
